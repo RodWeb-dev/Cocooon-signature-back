@@ -1,0 +1,43 @@
+networks:
+  cocoon_network:
+    external: true
+
+services:
+
+  php:
+    build: .
+    container_name: cocoon-back
+    restart: unless-stopped
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: mariadb
+    volumes:
+      - ./src:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.back.rule=Host(`api.cocoon-signature.test`)"
+      - "traefik.http.routers.back.entrypoints=web"
+      - "traefik.http.services.back.loadbalancer.server.port=80"
+    networks:
+      - cocoon_network
+
+  mariadb:
+    image: mariadb:11
+    container_name: cocoon-db
+    restart: unless-stopped
+    ports:
+      - "192.168.1.50:3307:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - cocoon_db_data:/var/lib/mysql
+    networks:
+      - cocoon_network
+
+volumes:
+  cocoon_db_data:
