@@ -9,23 +9,15 @@
 # Composer
 vendor/
 
+# Node dependencies
+node_modules
+
 # Claude
 .claude
 
 # Dossier temporaires
 tmp/
 uploads/
-
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
-
-# Node dependencies
-node_modules
 
 # Logs
 logs
