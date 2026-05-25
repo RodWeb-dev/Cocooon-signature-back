@@ -1,13 +1,79 @@
-
 stages:
-- test
-- secret-detection
+  - test
+  - secret-detection
+  - build
+  - deploy
+
+variables:
+  IMAGE_NAME: $CI_REGISTRY_IMAGE/back
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  SECRET_DETECTION_ENABLED: 'true'
+
+# ─── SAST ───────────────────────────────────────────────
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
 sast:
   stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
-- template: Security/Secret-Detection.gitlab-ci.yml
-variables:
-  SECRET_DETECTION_ENABLED: 'true'
+
 secret_detection:
   stage: secret-detection
+
+# ─── TEST PHP ───────────────────────────────────────────
+
+test:php:
+  stage: test
+  image: php:8.3-cli
+  script:
+    - find src/ -name "*.php" -exec php -l {} \;
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+# ─── BUILD ──────────────────────────────────────────────
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ─── DEPLOY STAGING ─────────────────────────────────────
+
+deploy:staging:
+  stage: deploy
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+    - docker push $IMAGE_NAME:latest
+    - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  tags:
+    - rwd-test-shell
+
+# ─── DEPLOY PROD ────────────────────────────────────────
+
+deploy:prod:
+  stage: deploy
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $IMAGE_NAME:$IMAGE_TAG
+    - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  tags:
+    - rwd-prod-01
