@@ -1,0 +1,29 @@
+# Environement
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+
+# Composer
+vendor/
+
+# Node dependencies
+node_modules
+
+# Claude
+.claude
+
+# Dossier temporaires
+tmp/
+uploads/
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
