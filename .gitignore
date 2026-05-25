@@ -1,1 +1,37 @@
+# Environement
 .env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+
+# Composer
+vendor/
+
+# Claude
+.claude
+
+# Dossier temporaires
+tmp/
+uploads/
+
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
