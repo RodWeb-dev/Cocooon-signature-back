@@ -58,6 +58,13 @@ deploy:staging:
     - docker pull $IMAGE_NAME:$IMAGE_TAG
     - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
     - docker push $IMAGE_NAME:latest
+    - |
+      cat > /srv/cocoon-signature/back/.env << EOF
+      DB_NAME=$DB_NAME
+      DB_USER=$DB_USER
+      DB_PASSWORD=$DB_PASSWORD
+      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+      EOF
     - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
@@ -71,6 +78,15 @@ deploy:prod:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $IMAGE_NAME:$IMAGE_TAG
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+    - docker push $IMAGE_NAME:latest
+    - |
+      cat > /srv/cocoon-signature/back/.env << EOF
+      DB_NAME=$DB_NAME
+      DB_USER=$DB_USER
+      DB_PASSWORD=$DB_PASSWORD
+      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+      EOF
     - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
