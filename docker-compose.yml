@@ -12,7 +12,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: mariadb
+      DB_HOST: maraidb
     volumes:
       - ./src:/var/www/html
     labels:
