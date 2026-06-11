@@ -17,10 +17,13 @@ $dotenv->required([
     'JWT_SECRET', 'JWT_EXPIRATION',
     'ODOO_URL', 'ODOO_DB', 'ODOO_USER', 'ODOO_PASSWORD',
     'BREVO_API_KEY',
-    'PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET',
-    'PAYPAL_MODE', 'PAYPAL_WEBHOOK_ID',
-    'PAYPLUG_SECRET_KEY', 'PAYPLUG_WEBHOOK_SECRET'
 ]);
+
+if ($_ENV['APP_ENV'] !== 'development') {
+    $dotenv->required([
+        'PAYPLUG_SECRET_KEY', 'PAYPLUG_WEBHOOK_SECRET'
+    ]);
+}
 
 // Error reporting based on environment
 if ($_ENV['APP_ENV'] === 'development') {
