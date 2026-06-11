@@ -11,6 +11,9 @@ use App\Controllers\CartController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
 
+/**
+ * Declares all application routes — called once at bootstrap from index.php.
+ */
 class Routes
 {
     private const AUTH = '/api/auth';
@@ -21,6 +24,7 @@ class Routes
     private const ORDERS = '/api/orders';
     private const PAYMENTS = '/api/payments';
 
+    /** Register all API routes on the router. */
     public static function register(Router $router): void
     {
         // Auth

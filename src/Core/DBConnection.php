@@ -7,14 +7,21 @@ use PDO;
 use PDOException;
 use App\Core\Exceptions\HttpException;
 
+/**
+ * PDO singleton — call DBConnection::getInstance() to get the shared connection.
+ */
 class DBConnection
 {
     private static ?PDO $instance = null;
 
-    private function __construct() {
-        // Singleton : no direct instantiation
+    private function __construct()
+    {
+        // Singleton — prevents direct instantiation
     }
 
+    /**
+     * @throws HttpException 500 if the database connection fails
+     */
     public static function getInstance(): PDO
     {
         if (self::$instance === null) {

@@ -8,6 +8,7 @@ use App\Core\Router;
 use App\Core\Routes;
 use App\Core\Exceptions\HttpException;
 
+// Get env variables
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 $dotenv->required([
@@ -43,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Routing
 $router = new Router();
 Routes::register($router);
 

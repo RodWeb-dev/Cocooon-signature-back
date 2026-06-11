@@ -8,8 +8,12 @@ use App\Core\Exceptions\NotFoundException;
 use App\Core\Exceptions\MethodNotAllowedException;
 use App\Core\Exceptions\UnauthorizedException;
 
+/**
+ * Matches incoming HTTP requests to controller actions and enforces JWT authentication.
+ */
 class Router
 {
+    /** @var array<int, array{method: string, path: string, handler: array, auth: bool}> */
     private array $routes = [];
     private JWT $jwt;
 
@@ -21,6 +25,10 @@ class Router
         );
     }
 
+    /**
+     * @param array $handler  [ControllerClass::class, 'actionMethod']
+     * @param bool  $auth     Require a valid JWT before calling the handler
+     */
     private function addRoute(string $method, string $path, array $handler, bool $auth): void
     {
         $this->routes[] = [
@@ -31,26 +39,35 @@ class Router
         ];
     }
 
+    /** @param array $handler  [ControllerClass::class, 'actionMethod'] */
     public function get(string $path, array $handler, bool $auth = false): void
     {
         $this->addRoute('GET', $path, $handler, $auth);
     }
 
+    /** @param array $handler  [ControllerClass::class, 'actionMethod'] */
     public function post(string $path, array $handler, bool $auth = false): void
     {
         $this->addRoute('POST', $path, $handler, $auth);
     }
 
+    /** @param array $handler  [ControllerClass::class, 'actionMethod'] */
     public function patch(string $path, array $handler, bool $auth = false): void
     {
         $this->addRoute('PATCH', $path, $handler, $auth);
     }
 
+    /** @param array $handler  [ControllerClass::class, 'actionMethod'] */
     public function delete(string $path, array $handler, bool $auth = false): void
     {
         $this->addRoute('DELETE', $path, $handler, $auth);
     }
 
+    /**
+     * @throws NotFoundException         if no route matches the URI
+     * @throws MethodNotAllowedException if the URI matches but the HTTP method does not
+     * @throws UnauthorizedException     if the route requires auth and the token is absent or invalid
+     */
     public function dispatch(string $method, string $uri): void
     {
         $uri = parse_url($uri, PHP_URL_PATH);
@@ -91,6 +108,11 @@ class Router
         throw new NotFoundException();
     }
 
+    /**
+     * Converts {param} placeholders to a regex and extracts named values.
+     *
+     * @return array<string, string>|null Named URL parameters, or null if the pattern does not match
+     */
     private function match(string $path, string $uri): ?array
     {
         preg_match_all('/\{(\w+)\}/', $path, $paramNames);
@@ -106,6 +128,10 @@ class Router
         return array_combine($paramNames[1], $matches) ?: [];
     }
 
+    /**
+     * @return array<string, mixed> Decoded JWT payload (sub, role, iat, exp)
+     * @throws UnauthorizedException if the Authorization header is absent or the token is invalid
+     */
     private function checkAuth(): array
     {
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
