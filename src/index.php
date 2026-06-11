@@ -5,6 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Router;
+use App\Core\Routes;
+use App\Core\Exceptions\HttpException;
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
@@ -42,4 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $router = new Router();
-$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+Routes::register($router);
+
+try {
+    $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+} catch (HttpException $e) {
+    http_response_code($e->getCode());
+    echo json_encode(['data' => null, 'error' => $e->getMessage()]);
+} catch (\Throwable $e) {
+    error_log($e->getMessage());
+    http_response_code(500);
+    echo json_encode(['data' => null, 'error' => 'Erreur interne du serveur']);
+}
