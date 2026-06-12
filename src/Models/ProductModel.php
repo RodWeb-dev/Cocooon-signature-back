@@ -106,16 +106,17 @@ class ProductModel
         }
 
         $sql = "
-            INSERT INTO products (" . implode(', ', $fields) . ")
-            VALUES (" . implode(', ', $values) . ")
+            INSERT INTO products (" . implode(', ', $fields) . ", synced_at)
+            VALUES (" . implode(', ', $values) . ", :synced_at)
             ON DUPLICATE KEY UPDATE
-                " . implode(', ', $setParts) . "
+                " . implode(', ', $setParts) . ", synced_at = :synced_at
         ";
 
         $stmt = self::getDb()->prepare($sql);
         foreach ($params as $param => $value) {
             $stmt->bindValue($param, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
+        $stmt->bindValue(':synced_at', date('Y-m-d H:i:s'), PDO::PARAM_STR);
         $stmt->execute();
     }
 
