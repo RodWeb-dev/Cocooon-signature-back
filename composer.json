@@ -16,7 +16,6 @@
         "getbrevo/brevo-php": "^4.0",
         "symfony/http-client": "^8.1",
         "nyholm/psr7": "^1.8",
-        "paypal/paypal-server-sdk": "^2.3",
         "payplug/payplug-php": "^4.0"
     },
     "config": {

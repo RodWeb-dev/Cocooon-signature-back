@@ -69,7 +69,6 @@ class Routes
         $router->get(self::ORDERS . '/{id}', [OrderController::class, 'show'], auth: true);
 
         // Payment
-        $router->post(self::PAYMENTS . '/paypal/webhook', [PaymentController::class, 'paypalWebhook']);
         $router->post(self::PAYMENTS . '/payplug/webhook', [PaymentController::class, 'payplugWebhook']);
     }
 }
