@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** PDO queries for the orders and order_items tables. */
 class OrderModel
 {
     private static function getDb(): PDO
@@ -14,6 +15,7 @@ class OrderModel
         return DBConnection::getInstance();
     }
 
+    /** Creates an order with status pending and returns its id. */
     public static function create(string $userId, int $addressId): int
     {
         $sql = "INSERT INTO orders (owner, address_id) VALUES (:owner, :address_id)";
@@ -26,6 +28,7 @@ class OrderModel
         return (int) self::getDb()->lastInsertId();
     }
     
+    /** Inserts an order line (price snapshot at order time). */
     public static function addItem(int $orderId, string $ref, int $quantity, float $price): void
     {
         $sql = "INSERT INTO order_items (order_id, ref, quantity, price) VALUES (:order_id, :ref, :quantity, :price)";
@@ -38,6 +41,7 @@ class OrderModel
         $stmt->execute();
     }
     
+    /** Returns all orders for the user (headers only, no items). */
     public static function getAllByUser(string $userId): array
     {
         $sql = "SELECT * FROM orders WHERE owner = :owner";
@@ -49,6 +53,7 @@ class OrderModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
     
+    /** Returns an order with its items and the primary image of each product, or null (owner-scoped). */
     public static function getOrder(int $orderId, string $userId): ?array
     {
         $sql = "SELECT * FROM orders WHERE owner = :owner AND id = :id";
@@ -115,6 +120,7 @@ class OrderModel
         return $order;
     }
     
+    /** Updates the order status (transitions driven by Odoo or admin). */
     public static function updateStatus(int $orderId, string $status): void
     {
         $sql = "UPDATE orders SET status = :status WHERE id = :id";

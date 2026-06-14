@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** PDO queries for the products, product_images and reviews tables. */
 class ProductModel
 {
     private static function getDb(): PDO
@@ -14,6 +15,7 @@ class ProductModel
         return DBConnection::getInstance();
     }
 
+    /** Returns all products, optionally filtered by collection_id, category_id or subcategory_id. */
     public static function findAll(array $filters = []): array
     {
         $sql = "SELECT * FROM products";
@@ -45,6 +47,7 @@ class ProductModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** Returns a product row by slug, or null if not found. */
     public static function findBySlug(string $slug): ?array
     {
         $sql = "SELECT * FROM products WHERE slug = :slug";
@@ -56,6 +59,7 @@ class ProductModel
         return $product ?: null;
     }
 
+    /** Returns all reviews for a product, joined with reviewer firstname and lastname. */
     public static function getReviews(string $slug): array
     {
         $sql = "
@@ -72,6 +76,7 @@ class ProductModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** Inserts a review. Eligibility (delivered order) must be checked by the controller. */
     public static function addReview(string $ref, string $userId, int $rating, ?string $comment): void
     {
         $sql = "INSERT INTO reviews (ref, owner, rating, comment) VALUES (:ref, :owner, :rating, :comment)";
@@ -84,6 +89,7 @@ class ProductModel
         $stmt->execute();
     }
 
+    /** Inserts or updates a product row on Odoo sync (INSERT … ON DUPLICATE KEY UPDATE on ref). */
     public static function upsert(array $data): void
     {
         if (empty($data)) {
@@ -120,6 +126,7 @@ class ProductModel
         $stmt->execute();
     }
 
+    /** Returns a product row by Odoo ref, or null if not found. */
     public static function findByRef(string $ref): ?array
     {
         $sql = "SELECT * FROM products WHERE ref = :ref";

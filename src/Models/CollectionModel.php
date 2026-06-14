@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** PDO queries for the collections and collection_images tables. */
 class CollectionModel
 {
     private static function getDb(): PDO
@@ -14,6 +15,7 @@ class CollectionModel
         return DBConnection::getInstance();
     }
 
+    /** Returns all collections with their images ordered by display_order. */
     public static function findAll() : array
     {
         $sql = "SELECT * FROM collections";
@@ -41,6 +43,7 @@ class CollectionModel
         return $collections;
     }
 
+    /** Returns a collection with its images and its products (each with images), or null. */
     public static function findBySlug(string $slug): ?array
     {
         $sql = "
@@ -113,6 +116,7 @@ class CollectionModel
         return $collection;
     }
 
+    /** Inserts or updates a collection row on Odoo sync (INSERT … ON DUPLICATE KEY UPDATE on slug). */
     public static function upsert(array $data): void
     {
         if (empty($data)) {
