@@ -14,7 +14,7 @@ vendor/
 node_modules
 
 # Claude
-.claude
+.claude/
 
 # Dossier temporaires
 tmp/
