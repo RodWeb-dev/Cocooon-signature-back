@@ -10,6 +10,7 @@ use App\Controllers\CollectionController;
 use App\Controllers\CartController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
+use App\Core\Controllers\AuthController as ControllersAuthController;
 
 /**
  * Declares all application routes — called once at bootstrap from index.php.
@@ -34,6 +35,7 @@ class Routes
         $router->post(self::AUTH . '/refresh', [AuthController::class, 'refresh']);
         $router->post(self::AUTH . '/forgot-password', [AuthController::class, 'forgotPassword']);
         $router->post(self::AUTH . '/reset-password', [AuthController::class, 'resetPassword']);
+        $router->get(self::AUTH . '/verify-email/{token}', [AuthController::class, 'verifyEmail']);
 
         // Users
         $router->get(self::USERS . '/me', [UserController::class, 'show'], auth: true);

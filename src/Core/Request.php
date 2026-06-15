@@ -10,6 +10,7 @@ class Request
 {
     public readonly string $method;
     public readonly string $uri;
+    public readonly string $ip;
     /** @var array<string, string> URL path parameters extracted by the router */
     public readonly array $params;
     /** @var array<string, mixed> JSON-decoded request body */
@@ -31,6 +32,7 @@ class Request
     ) {
         $this->method = $method;
         $this->uri    = $uri;
+        $this->ip     = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $this->params = $params;
         $this->body   = $body;
         $this->user   = $user;

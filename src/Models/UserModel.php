@@ -40,24 +40,19 @@ class UserModel
     }
 
     /** Inserts a new user and returns its generated UUID. */
-    public static function create(string $firstname, string $lastname, string $email, string $hash): string
+    public static function create(string $firstname, string $lastname, string $email, string $hash): void
     {
-        $id = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex(random_bytes(16)), 4));
-
         $sql = "INSERT INTO users
-            (id, firstname, lastname, email, hash_pwd)
+            (firstname, lastname, email, hash_pwd)
             VALUES (:id, :firstname, :lastname, :email, :hash_pwd)
         ";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindParam(':id', $id, PDO::PARAM_STR);
         $stmt->bindParam(':firstname', $firstname, PDO::PARAM_STR);
         $stmt->bindParam(':lastname', $lastname, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
         $stmt->bindParam(':hash_pwd', $hash, PDO::PARAM_STR);
         $stmt->execute();
-        
-        return $id;
     }
 
     /** Inserts a token row into the given table. */
@@ -72,6 +67,7 @@ class UserModel
         $stmt->bindParam(':token', $token, PDO::PARAM_STR);
         $stmt->bindParam(':expires_at', $expiresAt, PDO::PARAM_STR);
         $stmt->execute();
+        
     }
 
     /** Returns a token row by value, or null. */
