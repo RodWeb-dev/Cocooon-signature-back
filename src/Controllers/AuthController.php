@@ -8,7 +8,6 @@ use App\Core\Security\FilterInput;
 use App\Core\Security\JWT;
 use App\Core\Security\RateLimit;
 use App\Models\UserModel;
-use tidy;
 
 /**
  * Handles authentication endpoints: registration, login, logout, token refresh,

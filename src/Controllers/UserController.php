@@ -6,7 +6,6 @@ namespace App\Controllers;
 
 use App\Core\Security\FilterInput;
 use App\Models\UserModel;
-use JsonException;
 
 /**
  * Handles authenticated user profile and address management.
