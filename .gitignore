@@ -6,6 +6,7 @@
 # IDE
 .vscode/
 MariaDB-Cocoon.session.sql
+test.*
 
 # Composer
 vendor/

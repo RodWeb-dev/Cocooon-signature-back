@@ -10,6 +10,10 @@ use App\Core\Security\RateLimit;
 use App\Models\UserModel;
 use tidy;
 
+/**
+ * Handles authentication endpoints: registration, login, logout, token refresh,
+ * and password recovery.
+ */
 class AuthController
 {
     private JWT $jwt;
@@ -19,6 +23,15 @@ class AuthController
         $this->jwt = new JWT($_ENV['JWT_SECRET'], $_ENV['JWT_EXPIRATION']);
     }
 
+    /**
+     * Validates required fields, rate limit, and email format.
+     * Terminates with an HTTP error response if any check fails.
+     *
+     * @param array  $body   Request body data
+     * @param array  $fields Required field names
+     * @param string $ip     Client IP address
+     * @param string $action Rate limit action key
+     */
     private function validate(array $body, array $fields, string $ip, string $action): void
     {
         $missing = FilterInput::required($fields, $body);
@@ -50,6 +63,14 @@ class AuthController
         }
     }
     
+    /**
+     * Registers a new user account.
+     *
+     * Validates required fields, password strength, and email uniqueness.
+     * Responds 201 on success, 400/409 on validation or conflict errors.
+     *
+     * @param object $request Request with body: firstname, lastname, email, password
+     */
     public function register(object $request): void
     {
         $body = $request->body;
@@ -96,6 +117,13 @@ class AuthController
         ]);
     }
 
+    /**
+     * Authenticates a user and returns access and refresh tokens.
+     *
+     * Responds 200 with tokens on success, 401 on invalid credentials.
+     *
+     * @param object $request Request with body: email, password
+     */
     public function login(object $request): void
     {
         $body = $request->body;
@@ -141,6 +169,11 @@ class AuthController
         ]);
     }
 
+    /**
+     * Invalidates a refresh token.
+     *
+     * @param object $request Request with optional body: refresh_token
+     */
     public function logout(object $request): void
     {
         $body = $request->body;
@@ -157,6 +190,13 @@ class AuthController
         ]);
     }
 
+    /**
+     * Issues a new access token from a valid, non-expired refresh token.
+     *
+     * Responds 200 with a new access_token on success, 401 if the token is invalid or expired.
+     *
+     * @param object $request Request with body: refresh_token
+     */
     public function refresh(object $request): void
     {
         $body = $request->body;
@@ -192,6 +232,13 @@ class AuthController
         ]);
     }
 
+    /**
+     * Triggers a password reset email for the given address.
+     *
+     * Always responds 200 to avoid email enumeration.
+     *
+     * @param object $request Request with body: email
+     */
     public function forgotPassword(object $request): void
     {
         $body = $request->body;
@@ -218,6 +265,13 @@ class AuthController
         ]);
     }
 
+    /**
+     * Resets the user password using a valid reset token.
+     *
+     * Responds 200 on success, 401 if the token is invalid or expired.
+     *
+     * @param object $request Request with body: password, token
+     */
     public function resetPassword(object $request): void
     {
         $body = $request->body;

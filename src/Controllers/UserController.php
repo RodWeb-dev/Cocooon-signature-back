@@ -8,8 +8,16 @@ use App\Core\Security\FilterInput;
 use App\Models\UserModel;
 use JsonException;
 
+/**
+ * Handles authenticated user profile and address management.
+ */
 class UserController
 {
+    /**
+     * Returns the authenticated user's profile, excluding the password hash.
+     *
+     * @param object $request Request with user context
+     */
     public function getMe(object $request): void
     {
         $user = UserModel::findById($request->user['id']);
@@ -23,6 +31,13 @@ class UserController
         ]);
     }
 
+    /**
+     * Updates allowed profile fields for the authenticated user.
+     *
+     * Sanitizes all string inputs before persisting.
+     *
+     * @param object $request Request with body containing fields to update
+     */
     public function updateMe(object $request): void
     {
         $userId = $request->user['id'];
@@ -64,6 +79,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Changes the authenticated user's password after verifying the current one.
+     *
+     * @param object $request Request with body: current_password, new_password
+     */
     public function updatePassword(object $request): void
     {
         $userId = $request->user['id'];
@@ -110,6 +130,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Deletes the authenticated user's account after password confirmation.
+     *
+     * @param object $request Request with body: password
+     */
     public function deleteMe(object $request): void
     {
         $userId = $request->user['id'];
@@ -143,6 +168,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Returns all saved addresses for the authenticated user.
+     *
+     * @param object $request Request with user context
+     */
     public function getAddresses(object $request): void
     {
         $userId = $request->user['id'];
@@ -155,6 +185,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Adds a new address for the authenticated user.
+     *
+     * @param object $request Request with body: name, address, postal_code, city
+     */
     public function addAddress(object $request): void
     {
         $body = $request->body;
@@ -186,6 +221,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Updates an existing address belonging to the authenticated user.
+     *
+     * @param object $request Request with body fields to update and params['id']
+     */
     public function updateAddress(object $request): void
     {
         $body = $request->body;
@@ -216,6 +256,11 @@ class UserController
         ]);
     }
 
+    /**
+     * Deletes an address belonging to the authenticated user.
+     *
+     * @param object $request Request with params['id']
+     */
     public function deleteAddress(object $request): void
     {
         $userId = $request->user['id'];
