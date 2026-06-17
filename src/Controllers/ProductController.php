@@ -8,8 +8,10 @@ use App\Core\Security\FilterInput;
 use App\Models\OrderModel;
 use App\Models\ProductModel;
 
+/** HTTP handlers for product endpoints. */
 class ProductController
 {
+    /** Returns all products, optionally filtered by query parameters. */
     public function getAll(object $request): void
     {
         $filters = $request->query;
@@ -23,6 +25,7 @@ class ProductController
         ]);
     }
 
+    /** Returns a single product by slug, or 404 if not found. */
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
@@ -45,7 +48,8 @@ class ProductController
         ]);
     }
 
-    public function getReviews($request): void
+    /** Returns the reviews for a product by slug. */
+    public function getReviews(object $request): void
     {
         $slug = $request->params['slug'];
 
@@ -58,6 +62,7 @@ class ProductController
         ]);
     }
 
+    /** Adds a review for a product; requires a delivered order from the requesting user. */
     public function addReview(object $request): void
     {
         $userId = $request->user['sub'];
