@@ -39,7 +39,7 @@ class UserController
      */
     public function updateMe(object $request): void
     {
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $body = $request->body;
 
         if(empty($body)) {
@@ -85,7 +85,7 @@ class UserController
      */
     public function updatePassword(object $request): void
     {
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $body = $request->body;
         $fields = ['new_password', 'current_password'];
 
@@ -136,7 +136,7 @@ class UserController
      */
     public function deleteMe(object $request): void
     {
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
 
         if(!isset($request->body['password'])) {
             http_response_code(400);
@@ -174,7 +174,7 @@ class UserController
      */
     public function getAddresses(object $request): void
     {
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $addresses = UserModel::getAddresses($userId);
 
         http_response_code(200);
@@ -192,7 +192,7 @@ class UserController
     public function addAddress(object $request): void
     {
         $body = $request->body;
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $fields = ['name', 'address', 'postal_code', 'city'];
 
         $missing = FilterInput::required($fields, $body);
@@ -228,7 +228,7 @@ class UserController
     public function updateAddress(object $request): void
     {
         $body = $request->body;
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $addressId = $request->params['id'];
 
         if(empty($body)) {
@@ -262,7 +262,7 @@ class UserController
      */
     public function deleteAddress(object $request): void
     {
-        $userId = $request->user['id'];
+        $userId = $request->user['sub'];
         $addressId = $request->params['id'];
 
         UserModel::deleteAddress($addressId, $userId);

@@ -9,6 +9,7 @@ use App\Core\Security\JWT;
 use App\Core\Security\RateLimit;
 use App\Models\UserModel;
 use App\Models\TokenModel;
+use App\Models\NewsletterModel;
 use App\Services\EmailService;
 
 /**
@@ -107,9 +108,15 @@ class AuthController
 
         $firstname = FilterInput::sanitize($body['firstname']);
         $lastname = FilterInput::sanitize($body['lastname']);
+        $subscribed = $body['newsletter'] ?? false;
         $hashedPassword = password_hash($body['password'], PASSWORD_BCRYPT);
 
         $userId = UserModel::create($firstname, $lastname, $body['email'], $hashedPassword);
+
+        if($subscribed) {
+            NewsletterModel::subscribe($body['email'], $userId);
+        }
+
         $token = bin2hex(random_bytes(32));
         $url = $_ENV['FRONTEND_URL'] . '/verification-email/' . $token;
         $to = [
