@@ -13,6 +13,7 @@ use Brevo\TransactionalEmails\Types\SendTransacEmailRequestToItem;
 use Brevo\Exceptions\BrevoApiException;
 
 
+/** Sends transactional emails via the Brevo API. Production transport. */
 class BrevoTransport implements MailTransportInterface
 {
     private Brevo $brevo;
@@ -22,6 +23,11 @@ class BrevoTransport implements MailTransportInterface
         $this->brevo = new Brevo($_ENV['BREVO_API_KEY']);
     }
 
+    /**
+     * Sends an HTML email through the Brevo transactional API.
+     *
+     * @throws MailException if the Brevo API returns an error
+     */
     public function send(array $from, array $to, string $subject, string $htmlBody): void
     {
         $request = new SendTransacEmailRequest([
