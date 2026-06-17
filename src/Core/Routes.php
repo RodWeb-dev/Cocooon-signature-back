@@ -40,7 +40,7 @@ class Routes
         // Users
         $router->get(self::USERS . '/me', [UserController::class, 'show'], auth: true);
         $router->patch(self::USERS . '/me', [UserController::class, 'updateProfile'], auth: true);
-        $router->patch(self::USERS . '/me/newsletter/{subscribed}', [UserController::class, 'updateProfile'], auth: true);
+        $router->patch(self::USERS . '/me/newsletter', [UserController::class, 'toggleNewsletter'], auth: true);
         $router->patch(self::USERS . '/me/password', [UserController::class, 'updatePassword'], auth: true);
         $router->delete(self::USERS . '/me', [UserController::class, 'delete'], auth: true);
         $router->get(self::USERS . '/me/addresses', [UserController::class, 'listAddresses'], auth: true);
