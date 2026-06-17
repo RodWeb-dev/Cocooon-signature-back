@@ -346,6 +346,13 @@ class AuthController
         ]);
     }
 
+    /**
+     * Marks the user's email as verified using a one-time token sent by email.
+     *
+     * Responds 200 on success, 401 if the token is invalid or expired.
+     *
+     * @param object $request Request with params['token']
+     */
     public function verifyEmail(object $request): void
     {
         $token = $request->params['token'];

@@ -7,8 +7,16 @@ namespace App\Controllers;
 use App\Models\NewsletterModel;
 use App\Models\UserModel;
 
+/** Handles newsletter subscription endpoints. */
 class NewsletterController
 {
+    /**
+     * Subscribes an email address to the newsletter.
+     *
+     * The user ID is optional — anonymous subscriptions are allowed.
+     *
+     * @param object $request Request with body: email. user context optional.
+     */
     public function subscribe(object $request): void
     {
         $email = $request->body['email'];
@@ -26,6 +34,11 @@ class NewsletterController
         ]);
     }
 
+    /**
+     * Enables or disables the newsletter subscription for the authenticated user.
+     *
+     * @param object $request Request with body: subscribed (bool) and user context
+     */
     public function toggleNewsletter(object $request): void
     {
         $userId = $request->user['sub'];

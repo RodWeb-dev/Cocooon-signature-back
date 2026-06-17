@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** Manages newsletter subscriptions in the newsletter_subscribers table. */
 class NewsletterModel
 {
     private static function getDb(): PDO
@@ -14,6 +15,7 @@ class NewsletterModel
         return DBConnection::getInstance();
     }
 
+    /** Inserts a subscriber; if the email already exists, links it to the user if not yet linked. */
     public static function subscribe(string $email, ?string $userId = null): void
     {
         $sql = "INSERT INTO newsletter_subscribers
@@ -28,6 +30,7 @@ class NewsletterModel
         $stmt->execute();
     }
 
+    /** Removes the newsletter subscription for the given user. */
     public static function unsubscribe(string $userId): void
     {
         $sql = "DELETE FROM newsletter_subscribers WHERE owner = :owner";
@@ -37,6 +40,7 @@ class NewsletterModel
         $stmt->execute();
     }
 
+    /** Returns the subscription row for a given user, or null. */
     public static function findByOwner(string $userId): ?array
     {
         $sql = "SELECT * FROM newsletter_subscribers WHERE owner = :owner";

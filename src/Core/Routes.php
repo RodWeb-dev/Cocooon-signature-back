@@ -48,9 +48,9 @@ class Routes
         $router->delete(self::USERS . '/me/addresses/{id}', [UserController::class, 'deleteAddress'], auth: true);
 
         // Products
-        $router->get(self::PRODUCTS, [ProductController::class, 'list']);
-        $router->get(self::PRODUCTS . '/{slug}', [ProductController::class, 'show']);
-        $router->get(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'reviews']);
+        $router->get(self::PRODUCTS, [ProductController::class, 'getAll']);
+        $router->get(self::PRODUCTS . '/{slug}', [ProductController::class, 'getOne']);
+        $router->get(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'getReviews']);
         $router->post(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'addReview'], auth: true);
 
         // Collections

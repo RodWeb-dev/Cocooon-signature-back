@@ -7,6 +7,7 @@ namespace App\Core\Security;
 use App\Core\DBConnection;
 use PDO;
 
+/** Enforces per-action, per-identifier request rate limits backed by the rate_limits table. */
 class RateLimit
 {
     private const LIMITS = [
@@ -19,6 +20,7 @@ class RateLimit
         return DBConnection::getInstance();
     }
     
+    /** Returns false if the identifier is currently blocked for the given action, true otherwise. */
     public static function check(string $action, string $identifier): bool
     {
         $sql = "SELECT blocked_until FROM rate_limits WHERE action = :action AND identifier = :identifier";
@@ -39,6 +41,7 @@ class RateLimit
         return true;
     }
     
+    /** Records an attempt and blocks the identifier if the configured limit is reached within the window. */
     public static function hit(string $action, string $identifier): void
     {
         $sql = "SELECT * FROM rate_limits WHERE action = :action AND identifier = :identifier";
@@ -98,6 +101,7 @@ class RateLimit
         }
     }
 
+    /** Resets the attempt counter for an identifier after a successful authentication. */
     public static function reset(string $action, string $identifier): void
     {
         $sql = "UPDATE rate_limits

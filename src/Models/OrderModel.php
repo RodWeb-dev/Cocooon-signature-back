@@ -131,4 +131,18 @@ class OrderModel
         $stmt->execute();
     }
 
+    public static function hasDeliveredOrder(string $userId, string $ref): bool
+    {
+        $sql = "SELECT 1 FROM order_items AS oi
+                JOIN orders AS o ON oi.order_id = o.id
+                WHERE o.owner = :owner AND oi.ref = :ref AND o.status = 'delivered'
+                LIMIT 1";
+
+        $stmt = self::getDb()->prepare($sql);
+        $stmt->bindValue(':owner', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':ref', $ref, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return (bool) $stmt->fetch();
+    }
 }
