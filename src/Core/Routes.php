@@ -10,6 +10,7 @@ use App\Controllers\CollectionController;
 use App\Controllers\CartController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
+use App\Core\Controllers\AuthController as ControllersAuthController;
 
 /**
  * Declares all application routes — called once at bootstrap from index.php.
@@ -34,10 +35,12 @@ class Routes
         $router->post(self::AUTH . '/refresh', [AuthController::class, 'refresh']);
         $router->post(self::AUTH . '/forgot-password', [AuthController::class, 'forgotPassword']);
         $router->post(self::AUTH . '/reset-password', [AuthController::class, 'resetPassword']);
+        $router->get(self::AUTH . '/verify-email/{token}', [AuthController::class, 'verifyEmail']);
 
         // Users
         $router->get(self::USERS . '/me', [UserController::class, 'show'], auth: true);
         $router->patch(self::USERS . '/me', [UserController::class, 'updateProfile'], auth: true);
+        $router->patch(self::USERS . '/me/newsletter/{subscribed}', [UserController::class, 'updateProfile'], auth: true);
         $router->patch(self::USERS . '/me/password', [UserController::class, 'updatePassword'], auth: true);
         $router->delete(self::USERS . '/me', [UserController::class, 'delete'], auth: true);
         $router->get(self::USERS . '/me/addresses', [UserController::class, 'listAddresses'], auth: true);
@@ -70,5 +73,8 @@ class Routes
 
         // Payment
         $router->post(self::PAYMENTS . '/payplug/webhook', [PaymentController::class, 'payplugWebhook']);
+
+        // Newletter
+        $router->post('/api/newsletter', [NewsletterController::class, 'subscribe']);
     }
 }

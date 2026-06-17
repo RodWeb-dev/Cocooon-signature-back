@@ -1,6 +1,7 @@
 ----------
 -- Create the cocoon database and tables
 ----------
+--
 -- Create the cocoon database
 DROP DATABASE IF EXISTS cocoon;
 CREATE DATABASE cocoon CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -14,12 +15,14 @@ CREATE TABLE users (
     hash_pwd VARCHAR(255) NOT NULL,
     phone_nbr VARCHAR(20),
     role ENUM('admin', 'editor', 'pro', 'user') DEFAULT 'user',
+    email_verified TINYINT(1) DEFAULT 0,
     actif TINYINT(1) DEFAULT 1,
     birthday DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_role (role)
 );
+--
 -- Create the addresses table
 CREATE TABLE addresses (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,6 +36,7 @@ CREATE TABLE addresses (
     FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_owner (owner)
 );
+--
 -- Create the collections table
 CREATE TABLE collections (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,18 +45,21 @@ CREATE TABLE collections (
     description TEXT,
     synced_at DATETIME
 );
+--
 -- Create the categories table
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     synced_at DATETIME
 );
+--
 -- Create the subcategories table
 CREATE TABLE subcategories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     synced_at DATETIME
 );
+--
 -- Create the products table
 CREATE TABLE products (
     ref VARCHAR(60) PRIMARY KEY,
@@ -73,6 +80,7 @@ CREATE TABLE products (
     FOREIGN KEY (collection_id) REFERENCES collections(id),
     INDEX idx_slug (slug)
 );
+--
 -- Create the carts table
 CREATE TABLE carts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,6 +90,7 @@ CREATE TABLE carts (
     FOREIGN KEY (owner) REFERENCES users(id),
     INDEX idx_owner (owner)
 );
+--
 -- Create the orders table
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -99,6 +108,7 @@ CREATE TABLE orders (
     FOREIGN KEY (address_id) REFERENCES addresses(id),
     INDEX idx_owner (owner)
 );
+--
 -- Create the cart_items table
 CREATE TABLE cart_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +122,7 @@ CREATE TABLE cart_items (
     INDEX idx_cart_id (cart_id),
     INDEX idx_ref (ref)
 );
+--
 -- Create the order_items table
 CREATE TABLE order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -140,6 +151,7 @@ CREATE TABLE reviews (
     INDEX idx_ref (ref),
     INDEX idx_owner (owner)
 );
+--
 -- Create the collection_images table
 CREATE TABLE collection_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -150,6 +162,7 @@ CREATE TABLE collection_images (
     FOREIGN KEY (collection_id) REFERENCES collections(id),
     INDEX idx_collection_id (collection_id)
 );
+--
 -- Create the product_images table
 CREATE TABLE product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -160,6 +173,7 @@ CREATE TABLE product_images (
     FOREIGN KEY (ref) REFERENCES products(ref),
     INDEX idx_ref (ref)
 );
+--
 -- Create the reset_pwd_tokens table
 CREATE TABLE reset_pwd_tokens (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -171,6 +185,7 @@ CREATE TABLE reset_pwd_tokens (
     INDEX idx_owner (owner),
     INDEX idx_value (value)
 );
+--
 -- Create the refresh_tokens table
 CREATE TABLE refresh_tokens (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -182,6 +197,19 @@ CREATE TABLE refresh_tokens (
     INDEX idx_owner (owner),
     INDEX idx_value (value)
 );
+--
+-- Create the verify_email_tokens
+CREATE TABLE verify_email_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner VARCHAR(60) NOT NULL,
+    value VARCHAR(60) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (owner) REFERENCES users(id),
+    INDEX idx_owner (owner),
+    INDEX idx_value (value)
+);
+--
 -- Create the rate_limits table
 CREATE TABLE rate_limits (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -189,8 +217,10 @@ CREATE TABLE rate_limits (
     identifier VARCHAR(64) NOT NULL,
     attempts INT DEFAULT 1,
     first_attempt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    blocked_until DATETIME
+    blocked_until DATETIME,
+    CONSTRAINT uniq_action_identifier UNIQUE KEY (action, identifier)
 );
+--
 -- Create the contact_messages table
 CREATE TABLE contact_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -199,4 +229,15 @@ CREATE TABLE contact_messages (
     subject VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+--
+-- Create the newletter table
+CREATE TABLE newsletter_subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner VARCHAR(60) NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    synced_at DATETIME NULL,
+    FOREIGN KEY (owner) REFERENCES users(id),
+    INDEX idx_owner (owner)
 );
