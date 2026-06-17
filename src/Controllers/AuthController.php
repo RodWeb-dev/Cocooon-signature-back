@@ -1,0 +1,372 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use App\Core\Security\FilterInput;
+use App\Core\Security\JWT;
+use App\Core\Security\RateLimit;
+use App\Models\UserModel;
+use App\Models\TokenModel;
+use App\Models\NewsletterModel;
+use App\Services\EmailService;
+
+/**
+ * Handles authentication endpoints: registration, login, logout, token refresh,
+ * and password recovery.
+ */
+class AuthController
+{
+    private JWT $jwt;
+    private EmailService $emailService;
+    private const ERROR = 'Une erreur est survenue...';
+
+    public function __construct()
+    {
+        $this->jwt = new JWT($_ENV['JWT_SECRET'], $_ENV['JWT_EXPIRATION']);
+        $this->emailService = new EmailService();
+    }
+
+    /**
+     * Validates required fields, rate limit, and email format.
+     * Terminates with an HTTP error response if any check fails.
+     *
+     * @param array  $body   Request body data
+     * @param array  $fields Required field names
+     * @param string $ip     Client IP address
+     * @param string $action Rate limit action key
+     */
+    private function validate(array $body, array $fields, string $ip, string $action): void
+    {
+        $missing = FilterInput::required($fields, $body);
+        if(!empty($missing)) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+            ]);
+            exit;
+        }
+
+        if(!RateLimit::check($action, $ip)) {
+            http_response_code(429);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Veuillez réessayer plus tard'
+            ]);
+            exit;
+        }
+
+        if(in_array('email', $fields) && !FilterInput::email($body['email'])) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Le format de l\'adresse mail est incorrect'
+            ]);
+            exit;
+        }
+    }
+    
+    /**
+     * Registers a new user account.
+     *
+     * Validates required fields, password strength, and email uniqueness.
+     * Responds 201 on success, 400/409 on validation or conflict errors.
+     *
+     * @param object $request Request with body: firstname, lastname, email, password
+     */
+    public function register(object $request): void
+    {
+        $body = $request->body;
+        $ip = $request->ip;
+        $action = 'register';
+        $fields = ['firstname', 'lastname', 'email', 'password'];
+
+        $this->validate($body, $fields, $ip, $action);
+
+        RateLimit::hit('register', $ip);
+        // TODO Captcha v3 ?
+
+        if(!FilterInput::password($body['password'])) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Le format du mot de passe est incorrect'
+            ]);
+            exit;
+        }
+
+        if(UserModel::findByEmail($body['email'])) {
+            http_response_code(409);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'L\'adresse mail est déjà utilisée'
+            ]);
+            exit;
+        }
+
+        $firstname = FilterInput::sanitize($body['firstname']);
+        $lastname = FilterInput::sanitize($body['lastname']);
+        $subscribed = $body['newsletter'] ?? false;
+        $hashedPassword = password_hash($body['password'], PASSWORD_BCRYPT);
+
+        $userId = UserModel::create($firstname, $lastname, $body['email'], $hashedPassword);
+
+        if($subscribed) {
+            NewsletterModel::subscribe($body['email'], $userId);
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $url = $_ENV['FRONTEND_URL'] . '/verification-email/' . $token;
+        $to = [
+            'email' => $body['email'],
+            'name'  => "$firstname $lastname"
+        ];
+
+        TokenModel::saveVerifyToken($userId, $token, time() + 86400);
+        $this->emailService->sendWelcome($to, $firstname, $url);
+
+        http_response_code(201);
+        echo json_encode([
+            'data'  => 'Inscription réussie. Un mail de confirmation vient de vous être envoyé.',
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Authenticates a user and returns access and refresh tokens.
+     *
+     * Responds 200 with tokens on success, 401 on invalid credentials.
+     *
+     * @param object $request Request with body: email, password
+     */
+    public function login(object $request): void
+    {
+        $body = $request->body;
+        $ip = $request->ip;
+        $action = 'login';
+        $fields = ['email', 'password'];
+
+        $this->validate($body, $fields, $ip, $action);
+        if(!RateLimit::check($action, $body['email'])) {
+            http_response_code(429);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Veuillez réessayer plus tard'
+            ]);
+            exit;
+        }
+
+        $user = UserModel::findByEmail($body['email']);
+        if(!$user) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Identifiants incorrects'
+            ]);
+
+            RateLimit::hit($action, $ip);
+            exit;
+        }
+
+        if(!password_verify($body['password'], $user['hash_pwd'])) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Identifiants incorrects'
+            ]);
+            
+            RateLimit::hit($action, $ip);
+            RateLimit::hit($action, $body['email']);
+            exit;
+        }
+
+        RateLimit::reset($action, $ip);
+        RateLimit::reset($action, $body['email']);
+
+        $accessToken = $this->jwt->encode($user['id'], $user['role']);
+
+        $refreshToken = bin2hex(random_bytes(32));
+        TokenModel::saveRefreshToken($user['id'], $refreshToken, time() + 604800);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => [
+                'access_token'  => $accessToken,
+                'refresh_token' => $refreshToken
+            ],
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Invalidates a refresh token.
+     *
+     * @param object $request Request with optional body: refresh_token
+     */
+    public function logout(object $request): void
+    {
+        $body = $request->body;
+
+        if(isset($body['refresh_token'])) {
+            $refreshToken = $body['refresh_token'];
+            TokenModel::deleteRefreshToken($refreshToken);
+        }
+
+        http_response_code(200);
+         echo json_encode([
+            'data' => 'Déconnecté',
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Issues a new access token from a valid, non-expired refresh token.
+     *
+     * Responds 200 with a new access_token on success, 401 if the token is invalid or expired.
+     *
+     * @param object $request Request with body: refresh_token
+     */
+    public function refresh(object $request): void
+    {
+        $body = $request->body;
+
+        if(!isset($body['refresh_token'])) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => self::ERROR
+            ]);
+            exit;
+        }
+
+        $token = TokenModel::findRefreshToken($body['refresh_token']);
+        if(!$token || strtotime($token['expires_at']) < time()) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => self::ERROR
+            ]);
+            exit;
+        }
+
+        $user = UserModel::findById($token['owner']);
+        $newAccessToken = $this->jwt->encode($user['id'], $user['role']);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => [
+                'access_token' => $newAccessToken
+            ],
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Triggers a password reset email for the given address.
+     *
+     * Always responds 200 to avoid email enumeration.
+     *
+     * @param object $request Request with body: email
+     */
+    public function forgotPassword(object $request): void
+    {
+        $body = $request->body;
+        $ip = $request->ip;
+        $action = 'forgot-password';
+        $fields = ['email'];
+
+        $this->validate($body, $fields, $ip, $action);
+
+        $user = UserModel::findByEmail($body['email']);
+        
+        if($user) {
+            $resetToken = bin2hex(random_bytes(32));
+            TokenModel::saveResetToken($user['id'], $resetToken, time() + 3600);
+            $to = [
+                'email' => $user['email'],
+                'name'  => "{$user['firstname']} {$user['lastname']}"
+            ];
+            $url = $_ENV['FRONTEND_URL'] . '/reinitialisation-mot-de-passe/' . $resetToken;
+            
+            $this->emailService->sendResetPassword($to, $user['firstname'], $url);
+        }
+
+        RateLimit::hit($action, $ip);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => 'Un email a été envoyé à l\'adresse indiquée.',
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Resets the user password using a valid reset token.
+     *
+     * Responds 200 on success, 401 if the token is invalid or expired.
+     *
+     * @param object $request Request with body: password, token
+     */
+    public function resetPassword(object $request): void
+    {
+        $body = $request->body;
+        $fields = ['password', 'token'];
+
+        $missing = FilterInput::required($fields, $body);
+        if(!empty($missing)) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+            ]);
+            exit;
+        }
+
+        $token = TokenModel::findResetToken($body['token']);
+
+        if(!$token || strtotime($token['expires_at']) < time()) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => self::ERROR
+            ]);
+            exit;
+        }
+
+        $hash = password_hash($body['password'], PASSWORD_BCRYPT);
+        UserModel::updatePassword($token['owner'], $hash);
+        TokenModel::deleteResetToken($token['value']);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => 'Le mot de passe a été mis à jour.',
+            'error' => null
+        ]);
+    }
+
+    public function verifyEmail(object $request): void
+    {
+        $token = $request->params['token'];
+
+        $dbtoken = TokenModel::findVerifyToken($token);
+        if(!$dbtoken || strtotime($dbtoken['expires_at']) < time()) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => self::ERROR
+            ]);
+            exit;
+        }
+
+        UserModel::markEmailVerified($dbtoken['owner']);
+        TokenModel::deleteVerifyToken($token);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => 'L\'adresse mail à été vérifiée.',
+            'error' => null
+        ]);
+    }
+}

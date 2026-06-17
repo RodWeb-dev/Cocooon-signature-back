@@ -5,6 +5,8 @@
 
 # IDE
 .vscode/
+MariaDB-Cocoon.session.sql
+test.*
 
 # Composer
 vendor/
@@ -13,7 +15,7 @@ vendor/
 node_modules
 
 # Claude
-.claude
+.claude/
 
 # Dossier temporaires
 tmp/
