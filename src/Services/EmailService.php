@@ -9,6 +9,7 @@ use App\Core\Mail\SmtpTransport;
 use App\Core\Mail\BrevoTransport;
 use App\Core\Exceptions\MailException;
 
+/** Sends transactional emails via SmtpTransport (dev) or BrevoTransport (prod). */
 class EmailService
 {
     private MailTransportInterface $transport;
@@ -25,6 +26,14 @@ class EmailService
         : new BrevoTransport();
     }
 
+    /**
+     * Renders a PHP mail template to an HTML string.
+     *
+     * The included template has access to $data via PHP include scope sharing.
+     *
+     * @param string $name Template filename without extension (e.g. 'welcome')
+     * @param array  $data Variables exposed to the template
+     */
     private function renderTemplate(string $name, array $data): string
     {
         ob_start();
@@ -32,6 +41,13 @@ class EmailService
         return ob_get_clean();
     }
 
+    /**
+     * Sends the welcome email with an email-verification link.
+     *
+     * @param array  $to        Recipient as ['email' => ..., 'name' => ...]
+     * @param string $firstname Recipient first name for personalisation
+     * @param string $url       Email-verification URL
+     */
     public function sendWelcome(array $to, string $firstname, string $url): void
     {
         $body = $this->renderTemplate('welcome', [
@@ -47,6 +63,13 @@ class EmailService
         }
     }
 
+    /**
+     * Sends the password-reset email with a one-time reset link.
+     *
+     * @param array  $to        Recipient as ['email' => ..., 'name' => ...]
+     * @param string $firstname Recipient first name for personalisation
+     * @param string $url       Password-reset URL containing the one-time token
+     */
     public function sendResetPassword(array $to, string $firstname, string $url): void
     {
         $body = $this->renderTemplate('reset-password', [

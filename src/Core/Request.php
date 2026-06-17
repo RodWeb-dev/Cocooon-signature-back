@@ -13,6 +13,8 @@ class Request
     public readonly string $ip;
     /** @var array<string, string> URL path parameters extracted by the router */
     public readonly array $params;
+    /** @var array <string, string> GET query string */
+    public readonly array $query;
     /** @var array<string, mixed> JSON-decoded request body */
     public readonly array $body;
     /** @var array<string, mixed>|null JWT payload; null on public routes */
@@ -27,6 +29,7 @@ class Request
         string $method,
         string $uri,
         array $params = [],
+        array $query = [],
         array $body = [],
         ?array $user = null
     ) {
@@ -34,6 +37,7 @@ class Request
         $this->uri    = $uri;
         $this->ip     = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $this->params = $params;
+        $this->query  = $query;
         $this->body   = $body;
         $this->user   = $user;
     }
@@ -50,6 +54,6 @@ class Request
         $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 
-        return new self($method, $uri, $params, $body, $user);
+        return new self($method, $uri, $params, $_GET, $body, $user);
     }
 }

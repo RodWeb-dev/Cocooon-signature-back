@@ -10,7 +10,7 @@ use App\Controllers\CollectionController;
 use App\Controllers\CartController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
-use App\Core\Controllers\AuthController as ControllersAuthController;
+use App\Controllers\NewsletterController;
 
 /**
  * Declares all application routes — called once at bootstrap from index.php.
@@ -38,20 +38,19 @@ class Routes
         $router->get(self::AUTH . '/verify-email/{token}', [AuthController::class, 'verifyEmail']);
 
         // Users
-        $router->get(self::USERS . '/me', [UserController::class, 'show'], auth: true);
-        $router->patch(self::USERS . '/me', [UserController::class, 'updateProfile'], auth: true);
-        $router->patch(self::USERS . '/me/newsletter', [UserController::class, 'toggleNewsletter'], auth: true);
+        $router->get(self::USERS . '/me', [UserController::class, 'getMe'], auth: true);
+        $router->patch(self::USERS . '/me', [UserController::class, 'updateMe'], auth: true);
         $router->patch(self::USERS . '/me/password', [UserController::class, 'updatePassword'], auth: true);
-        $router->delete(self::USERS . '/me', [UserController::class, 'delete'], auth: true);
-        $router->get(self::USERS . '/me/addresses', [UserController::class, 'listAddresses'], auth: true);
+        $router->delete(self::USERS . '/me', [UserController::class, 'deleteMe'], auth: true);
+        $router->get(self::USERS . '/me/addresses', [UserController::class, 'getAddresses'], auth: true);
         $router->post(self::USERS . '/me/addresses', [UserController::class, 'addAddress'], auth: true);
         $router->patch(self::USERS . '/me/addresses/{id}', [UserController::class, 'updateAddress'], auth: true);
         $router->delete(self::USERS . '/me/addresses/{id}', [UserController::class, 'deleteAddress'], auth: true);
 
         // Products
-        $router->get(self::PRODUCTS, [ProductController::class, 'list']);
-        $router->get(self::PRODUCTS . '/{slug}', [ProductController::class, 'show']);
-        $router->get(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'reviews']);
+        $router->get(self::PRODUCTS, [ProductController::class, 'getAll']);
+        $router->get(self::PRODUCTS . '/{slug}', [ProductController::class, 'getOne']);
+        $router->get(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'getReviews']);
         $router->post(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'addReview'], auth: true);
 
         // Collections
@@ -76,5 +75,6 @@ class Routes
 
         // Newletter
         $router->post('/api/newsletter', [NewsletterController::class, 'subscribe']);
+        $router->patch('/api/newsletter', [NewsletterController::class, 'toggleNewsletter'], auth: true);
     }
 }
