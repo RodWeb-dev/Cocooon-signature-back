@@ -54,8 +54,8 @@ class Routes
         $router->post(self::PRODUCTS . '/{slug}/reviews', [ProductController::class, 'addReview'], auth: true);
 
         // Collections
-        $router->get(self::COLLECTIONS, [CollectionController::class, 'list']);
-        $router->get(self::COLLECTIONS . '/{slug}', [CollectionController::class, 'show']);
+        $router->get(self::COLLECTIONS, [CollectionController::class, 'getAll']);
+        $router->get(self::COLLECTIONS . '/{slug}', [CollectionController::class, 'getOne']);
 
         // Cart
         $router->get(self::CART, [CartController::class, 'show'], auth: true);

@@ -131,6 +131,7 @@ class OrderModel
         $stmt->execute();
     }
 
+    /** Returns true if the user has at least one delivered order containing the given product ref. */
     public static function hasDeliveredOrder(string $userId, string $ref): bool
     {
         $sql = "SELECT 1 FROM order_items AS oi
