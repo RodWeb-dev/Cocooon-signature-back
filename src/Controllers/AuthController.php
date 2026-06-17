@@ -8,6 +8,8 @@ use App\Core\Security\FilterInput;
 use App\Core\Security\JWT;
 use App\Core\Security\RateLimit;
 use App\Models\UserModel;
+use App\Models\TokenModel;
+use App\Services\EmailService;
 
 /**
  * Handles authentication endpoints: registration, login, logout, token refresh,
@@ -16,10 +18,13 @@ use App\Models\UserModel;
 class AuthController
 {
     private JWT $jwt;
+    private EmailService $emailService;
+    private const ERROR = 'Une erreur est survenue...';
 
     public function __construct()
     {
         $this->jwt = new JWT($_ENV['JWT_SECRET'], $_ENV['JWT_EXPIRATION']);
+        $this->emailService = new EmailService();
     }
 
     /**
@@ -79,6 +84,9 @@ class AuthController
 
         $this->validate($body, $fields, $ip, $action);
 
+        RateLimit::hit('register', $ip);
+        // TODO Captcha v3 ?
+
         if(!FilterInput::password($body['password'])) {
             http_response_code(400);
             echo json_encode([
@@ -101,13 +109,16 @@ class AuthController
         $lastname = FilterInput::sanitize($body['lastname']);
         $hashedPassword = password_hash($body['password'], PASSWORD_BCRYPT);
 
-        UserModel::create($firstname, $lastname, $body['email'], $hashedPassword);
+        $userId = UserModel::create($firstname, $lastname, $body['email'], $hashedPassword);
+        $token = bin2hex(random_bytes(32));
+        $url = $_ENV['FRONTEND_URL'] . '/verification-email/' . $token;
+        $to = [
+            'email' => $body['email'],
+            'name'  => "$firstname $lastname"
+        ];
 
-        RateLimit::hit('register', $ip);
-
-
-        // TODO Captcha v3 ?
-        // Email verification ?
+        TokenModel::saveVerifyToken($userId, $token, time() + 86400);
+        $this->emailService->sendWelcome($to, $firstname, $url);
 
         http_response_code(201);
         echo json_encode([
@@ -131,6 +142,14 @@ class AuthController
         $fields = ['email', 'password'];
 
         $this->validate($body, $fields, $ip, $action);
+        if(!RateLimit::check($action, $body['email'])) {
+            http_response_code(429);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Veuillez réessayer plus tard'
+            ]);
+            exit;
+        }
 
         $user = UserModel::findByEmail($body['email']);
         if(!$user) {
@@ -139,6 +158,8 @@ class AuthController
                 'data'  => null,
                 'error' => 'Identifiants incorrects'
             ]);
+
+            RateLimit::hit($action, $ip);
             exit;
         }
 
@@ -148,15 +169,19 @@ class AuthController
                 'data'  => null,
                 'error' => 'Identifiants incorrects'
             ]);
+            
+            RateLimit::hit($action, $ip);
+            RateLimit::hit($action, $body['email']);
             exit;
         }
+
+        RateLimit::reset($action, $ip);
+        RateLimit::reset($action, $body['email']);
 
         $accessToken = $this->jwt->encode($user['id'], $user['role']);
 
         $refreshToken = bin2hex(random_bytes(32));
-        UserModel::saveRefreshToken($user['id'], $refreshToken, time() + 604800);
-
-        RateLimit::hit($action, $ip);
+        TokenModel::saveRefreshToken($user['id'], $refreshToken, time() + 604800);
 
         http_response_code(200);
         echo json_encode([
@@ -179,7 +204,7 @@ class AuthController
 
         if(isset($body['refresh_token'])) {
             $refreshToken = $body['refresh_token'];
-            UserModel::deleteRefreshToken($refreshToken);
+            TokenModel::deleteRefreshToken($refreshToken);
         }
 
         http_response_code(200);
@@ -204,17 +229,17 @@ class AuthController
             http_response_code(400);
             echo json_encode([
                 'data'  => null,
-                'error' => 'Une erreur est survenue...'
+                'error' => self::ERROR
             ]);
             exit;
         }
 
-        $token = UserModel::findRefreshToken($body['refresh_token']);
+        $token = TokenModel::findRefreshToken($body['refresh_token']);
         if(!$token || strtotime($token['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
                 'data'  => null,
-                'error' => 'Une erreur est survenue...'
+                'error' => self::ERROR
             ]);
             exit;
         }
@@ -242,7 +267,7 @@ class AuthController
     {
         $body = $request->body;
         $ip = $request->ip;
-        $action = 'forgot_password';
+        $action = 'forgot-password';
         $fields = ['email'];
 
         $this->validate($body, $fields, $ip, $action);
@@ -251,8 +276,14 @@ class AuthController
         
         if($user) {
             $resetToken = bin2hex(random_bytes(32));
-            UserModel::saveResetToken($user['id'], $resetToken, time() + 3600);
-            // TODO EmailService->sendResetPassword
+            TokenModel::saveResetToken($user['id'], $resetToken, time() + 3600);
+            $to = [
+                'email' => $user['email'],
+                'name'  => "{$user['firstname']} {$user['lastname']}"
+            ];
+            $url = $_ENV['FRONTEND_URL'] . '/reinitialisation-mot-de-passe/' . $resetToken;
+            
+            $this->emailService->sendResetPassword($to, $user['firstname'], $url);
         }
 
         RateLimit::hit($action, $ip);
@@ -274,31 +305,60 @@ class AuthController
     public function resetPassword(object $request): void
     {
         $body = $request->body;
-        $ip = $request->ip;
-        $action = 'reset_password';
         $fields = ['password', 'token'];
 
-        $this->validate($body, $fields, $ip, $action);
+        $missing = FilterInput::required($fields, $body);
+        if(!empty($missing)) {
+            http_response_code(400);
+            echo json_encode([
+                'data'  => null,
+                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+            ]);
+            exit;
+        }
 
-        $token = UserModel::findResetToken($body['token']);
+        $token = TokenModel::findResetToken($body['token']);
 
         if(!$token || strtotime($token['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
                 'data'  => null,
-                'error' => 'Une erreur est survenue...'
+                'error' => self::ERROR
             ]);
             exit;
         }
 
         $hash = password_hash($body['password'], PASSWORD_BCRYPT);
         UserModel::updatePassword($token['owner'], $hash);
-        UserModel::deleteResetToken($token['value']);
-        RateLimit::hit($action, $ip);
+        TokenModel::deleteResetToken($token['value']);
 
         http_response_code(200);
         echo json_encode([
             'data' => 'Le mot de passe a été mis à jour.',
+            'error' => null
+        ]);
+    }
+
+    public function verifyEmail(object $request): void
+    {
+        $token = $request->params['token'];
+
+        $dbtoken = TokenModel::findVerifyToken($token);
+        if(!$dbtoken || strtotime($dbtoken['expires_at']) < time()) {
+            http_response_code(401);
+            echo json_encode([
+                'data'  => null,
+                'error' => self::ERROR
+            ]);
+            exit;
+        }
+
+        UserModel::markEmailVerified($dbtoken['owner']);
+        TokenModel::deleteVerifyToken($token);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => 'L\'adresse mail à été vérifiée.',
             'error' => null
         ]);
     }

@@ -198,6 +198,18 @@ CREATE TABLE refresh_tokens (
     INDEX idx_value (value)
 );
 --
+-- Create the verify_email_tokens
+CREATE TABLE verify_email_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner VARCHAR(60) NOT NULL,
+    value VARCHAR(60) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (owner) REFERENCES users(id),
+    INDEX idx_owner (owner),
+    INDEX idx_value (value)
+);
+--
 -- Create the rate_limits table
 CREATE TABLE rate_limits (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -205,7 +217,8 @@ CREATE TABLE rate_limits (
     identifier VARCHAR(64) NOT NULL,
     attempts INT DEFAULT 1,
     first_attempt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    blocked_until DATETIME
+    blocked_until DATETIME,
+    CONSTRAINT uniq_action_identifier UNIQUE KEY (action, identifier)
 );
 --
 -- Create the contact_messages table
@@ -216,4 +229,15 @@ CREATE TABLE contact_messages (
     subject VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+--
+-- Create the newletter table
+CREATE TABLE newsletter_subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    owner VARCHAR(60) NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    synced_at DATETIME NULL,
+    FOREIGN KEY (owner) REFERENCES users(id),
+    INDEX idx_owner (owner)
 );
