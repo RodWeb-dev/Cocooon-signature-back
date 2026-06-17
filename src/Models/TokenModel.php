@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** Manages short-lived tokens (reset-password, refresh JWT, email-verification) stored in dedicated tables. */
 class TokenModel
 {
     private static function getDb(): PDO
@@ -86,16 +87,19 @@ class TokenModel
         self::deleteToken('refresh_tokens', $token);
     }
 
+    /** Persists an email-verification token tied to the user. */
     public static function saveVerifyToken(string $userId, string $token, int $expiresAt): void
     {
         self::saveToken('verify_email_tokens', $userId, $token, $expiresAt);
     }
 
+    /** Returns a verify_email_tokens row by token value, or null. */
     public static function findVerifyToken(string $token): ?array
     {
         return self::findToken('verify_email_tokens', $token);
     }
 
+    /** Deletes an email-verification token after use (single-use enforcement). */
     public static function deleteVerifyToken(string $token): void
     {
         self::deleteToken('verify_email_tokens', $token);
