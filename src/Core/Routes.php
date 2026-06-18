@@ -58,12 +58,13 @@ class Routes
         $router->get(self::COLLECTIONS . '/{slug}', [CollectionController::class, 'getOne']);
 
         // Cart
-        $router->get(self::CART, [CartController::class, 'show'], auth: true);
+        $router->get(self::CART, [CartController::class, 'getCart'], auth: true);
         $router->post(self::CART . '/items', [CartController::class, 'addItem'], auth: true);
         $router->patch(self::CART . '/items/{id}', [CartController::class, 'updateItem'], auth: true);
-        $router->delete(self::CART . '/items/{id}', [CartController::class, 'removeItem'], auth: true);
-        $router->delete(self::CART, [CartController::class, 'clear'], auth: true);
-        $router->post(self::CART . '/merge', [CartController::class, 'merge'], auth: true);
+        $router->delete(self::CART . '/items/{id}', [CartController::class, 'deleteItem'], auth: true);
+        $router->delete(self::CART, [CartController::class, 'clearCart'], auth: true);
+        $router->post(self::CART . '/merge', [CartController::class, 'mergeItems'], auth: true);
+        $router->delete(self::CART . '/{id}', [CartController::class, 'deleteCart'], auth: true);
         
         // Orders
         $router->post(self::ORDERS, [OrderController::class, 'create'], auth: true);
