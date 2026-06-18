@@ -72,7 +72,10 @@ class ProductController
         $missing = FilterInput::required(['rating'], $body);
         if (!empty($missing)) {
             http_response_code(400);
-            echo json_encode(['data' => null, 'error' => 'La note est obligatoire']);
+            echo json_encode([
+                'data' => null,
+                'error' => 'La note est obligatoire'
+            ]);
             exit;
         }
 
