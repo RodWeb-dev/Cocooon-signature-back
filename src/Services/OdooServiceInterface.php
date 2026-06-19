@@ -14,8 +14,11 @@ interface OdooServiceInterface
     /** Récupère toutes les sous-catégories produit */
     public function getSubCategories(): array;
 
-    /** Récupère le catalogue complet : templates + variantes + prix + matières */
+    /** Récupère lestemplates + prix */
     public function getProducts(): array;
+
+    /** Récupère les variantes + prix + matières */
+    public function getVariantsForTemplate(int $templateId): array;
 
     // --- CRON : suivi des commandes ---
 

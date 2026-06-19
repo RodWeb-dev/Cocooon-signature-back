@@ -1,16 +1,15 @@
 FROM php:8.4-apache
 
-# Extensions PHP nécessaires
-RUN docker-php-ext-install \
+RUN apt-get update && apt-get install -y libicu-dev zip unzip libzip-dev \
+    # Extensions PHP nécessaires
+    && docker-php-ext-install \
     pdo \
     pdo_mysql \
-    mysqli
-
-# Activer le module Apache rewrite (pour les routes REST)
-RUN a2enmod rewrite
-
-RUN apt-get update && apt-get install -y zip unzip libzip-dev \
-    && docker-php-ext-install zip
+    mysqli \
+    intl \
+    zip \
+    # Activer le module Apache rewrite (pour les routes REST)
+    && a2enmod rewrite
 
 # Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

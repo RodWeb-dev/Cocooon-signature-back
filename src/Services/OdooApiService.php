@@ -27,6 +27,11 @@ class OdooApiService implements OdooServiceInterface
         return $templates;
     }
 
+    public function getVariantsForTemplate(int $templateId): array
+    {
+        
+    }
+
     /** Récupère les product.template avec leurs champs catalogue de base */
     private function fetchTemplates(): array
     {
@@ -46,9 +51,12 @@ class OdooApiService implements OdooServiceInterface
     }
 
     /** Construit la ref MariaDB unique : default_code du template + id variante */
-    private function buildVariantRef(string $templateDefaultCode, int $variantId): string
+    private function buildVariantRef(string|bool $templateDefaultCode, int $templateId, int $variantId): string
     {
-        return $templateDefaultCode . '-' . $variantId;
+        if ($templateDefaultCode) {
+            return $templateDefaultCode . '-' . $variantId;
+        }
+        return 'TMPL-' . $templateId . '-' . $variantId;
     }
 
     public function getOrderStatus(int $odooOrderId): array

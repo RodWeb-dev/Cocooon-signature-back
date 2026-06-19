@@ -253,15 +253,15 @@ CREATE TABLE materials (
 -- Create table product_variants
 CREATE TABLE product_variants (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    ref VARCHAR(60) NOT NULL,
+    product_ref VARCHAR(60) NOT NULL,
+    variant_ref VARCHAR(60) NOT NULL UNIQUE,
     odoo_variant_id INT,
-    dimension VARCHAR(50) NOT NULL,
+    dimension VARCHAR(50),
     material_id INT NOT NULL,
     base_price DECIMAL(10, 2) NOT NULL,
     stock INT DEFAULT 0,
     synced_at DATETIME,
-    FOREIGN KEY (ref) REFERENCES products(ref),
+    FOREIGN KEY (product_ref) REFERENCES products(ref),
     FOREIGN KEY (material_id) REFERENCES materials(id),
-    CONSTRAINT uniq_ref_dimension_material UNIQUE KEY (ref, dimension, material_id),
-    INDEX idx_ref (ref)
+    INDEX idx_ref (product_ref)
 );
