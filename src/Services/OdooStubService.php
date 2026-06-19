@@ -67,8 +67,46 @@ class OdooStubService implements OdooServiceInterface
 
     public function getProducts(): array
     {
-        // TODO : en attente de validation du système de prix avec Corinne
-        return [];
+        return [
+            [
+                'id'               => 26,
+                'name'             => 'Plateau',
+                'default_code'     => 'D-PLA-',
+                'list_price'       => 116.67,
+                'x_categorie'      => '4',
+                'x_souscategorie'  => '75',
+                'product_variant_ids' => [50, 51, 52],
+            ],
+            [
+                'id'               => 17,
+                'name'             => 'Cadres N°520',
+                'default_code'     => false,
+                'list_price'       => 75.0,
+                'x_categorie'      => '4',
+                'x_souscategorie'  => '74',
+                'product_variant_ids' => [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+            ],
+        ];
+    }
+
+    public function getVariantsForTemplate(int $templateId): array
+    {
+        $variants = [
+            // Plateau (id: 26)
+            26 => [
+                ['id' => 50, 'display_name' => 'Plateau (Chêne)',  'lst_price' => 116.67],
+                ['id' => 51, 'display_name' => 'Plateau (Noyer)',  'lst_price' => 116.67],
+                ['id' => 52, 'display_name' => 'Plateau (Frêne)',  'lst_price' => 116.67],
+            ],
+            // Cadres N°520 (id: 17)
+            17 => [
+                ['id' => 35, 'display_name' => 'Cadres N°520 (40 x 50, Chêne)',  'lst_price' => 116.67],
+                ['id' => 39, 'display_name' => 'Cadres N°520 (50 x 70, Noyer)',  'lst_price' => 150.0],
+                ['id' => 43, 'display_name' => 'Cadres N°520 (70 x 100, Frêne)', 'lst_price' => 191.67],
+            ],
+        ];
+    
+        return $variants[$templateId] ?? [];
     }
 
     public function getOrderStatus(int $odooOrderId): array
