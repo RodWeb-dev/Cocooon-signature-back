@@ -18,5 +18,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY ./src/composer.json ./src/composer.lock /var/www/html/
 RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
 
+# Copier le dossier src
+COPY ./src /var/www/html
+
 # Copier la config Apache personnalisée
 COPY ./config/apache.conf /etc/apache2/sites-available/000-default.conf
