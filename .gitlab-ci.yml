@@ -96,7 +96,7 @@ deploy:prod:
 migrate:staging:
   stage: migrate
   script:
-    - docker exec cocoon-back php migrate.php
+    - docker exec cocoon-back php /var/www/html/migrate.php
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
   tags:
@@ -105,7 +105,7 @@ migrate:staging:
 migrate:prod:
   stage: migrate
   script:
-    - docker exec cocoon-back php migrate.php
+    - docker exec cocoon-back php /var/www/html/migrate.php
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
