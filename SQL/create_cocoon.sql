@@ -48,15 +48,15 @@ CREATE TABLE collections (
 --
 -- Create the categories table
 CREATE TABLE categories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     synced_at DATETIME
 );
 --
 -- Create the subcategories table
 CREATE TABLE subcategories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
+    id INT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
     synced_at DATETIME
 );
 --
@@ -240,4 +240,28 @@ CREATE TABLE newsletter_subscribers (
     synced_at DATETIME NULL,
     FOREIGN KEY (owner) REFERENCES users(id),
     INDEX idx_owner (owner)
+);
+--
+-- Create table materials for price coefficient
+CREATE TABLE materials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    coefficient DECIMAL(5, 4) NOT NULL,
+    synced_at DATETIME
+);
+--
+-- Create table product_variants
+CREATE TABLE product_variants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_ref VARCHAR(60) NOT NULL,
+    variant_ref VARCHAR(60) NOT NULL UNIQUE,
+    odoo_variant_id INT,
+    dimension VARCHAR(50),
+    material_id INT NOT NULL,
+    base_price DECIMAL(10, 2) NOT NULL,
+    stock INT DEFAULT 0,
+    synced_at DATETIME,
+    FOREIGN KEY (product_ref) REFERENCES products(ref),
+    FOREIGN KEY (material_id) REFERENCES materials(id),
+    INDEX idx_ref (product_ref)
 );
