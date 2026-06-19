@@ -10,6 +10,7 @@ use PDO;
 /** PDO queries for the collections and collection_images tables. */
 class CollectionModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

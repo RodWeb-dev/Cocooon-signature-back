@@ -10,6 +10,7 @@ use PDO;
 /** PDO queries for the orders and order_items tables. */
 class OrderModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

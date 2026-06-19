@@ -10,6 +10,7 @@ use PDO;
 /** Manages short-lived tokens (reset-password, refresh JWT, email-verification) stored in dedicated tables. */
 class TokenModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

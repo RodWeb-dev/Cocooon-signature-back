@@ -9,7 +9,11 @@ use App\Models\CollectionModel;
 /** HTTP handlers for collection endpoints. */
 class CollectionController
 {
-    /** Returns all collections with their images. */
+    /**
+     * Returns all collections with their images.
+     *
+     * @param object $request Incoming HTTP request (no body or params required)
+     */
     public function getAll(object $request) : void
     {
         $collections = CollectionModel::findAll();
@@ -21,7 +25,11 @@ class CollectionController
         ]);
     }
 
-    /** Returns a single collection by slug with images and products, or 404 if not found. */
+    /**
+     * Returns a single collection by slug with its images and products (each with images), or 404.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];

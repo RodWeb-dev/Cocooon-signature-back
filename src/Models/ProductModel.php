@@ -10,6 +10,7 @@ use PDO;
 /** PDO queries for the products, product_images and reviews tables. */
 class ProductModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

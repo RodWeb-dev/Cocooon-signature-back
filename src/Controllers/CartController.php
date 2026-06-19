@@ -12,7 +12,17 @@ use Brevo\Types\Cart;
 /** HTTP handlers for cart endpoints. */
 class CartController
 {
-    /** Adds a single item to the user's cart; creates the cart if none exists. */
+    /**
+     * Validates product existence and stock, then adds the item to the user's pending cart.
+     *
+     * Creates the cart if none exists. Returns a result map so callers can forward
+     * the HTTP code and message without throwing.
+     *
+     * @param  string $userId   Authenticated user UUID
+     * @param  string $ref      Product reference (products.ref)
+     * @param  int    $quantity Number of units to add (must be >= 1)
+     * @return array{code: int, data: string|null, error: string|null}
+     */
     private function addSingleItem(string $userId, string $ref, int $quantity): array
     {
         $product = ProductModel::findByRef($ref);
@@ -42,7 +52,13 @@ class CartController
             ];
     }
 
-    /** Returns the authenticated user's pending cart. */
+    /**
+     * Returns the authenticated user's pending cart with its items and product images.
+     *
+     * Returns an empty array if no pending cart exists.
+     *
+     * @param object $request Request with user context
+     */
     public function getCart(object $request): void
     {
         $userId = $request->user['sub'];
@@ -55,7 +71,11 @@ class CartController
         ]);
     }
 
-    /** Adds an item to the cart; validates ref and quantity. */
+    /**
+     * Adds an item to the cart after validating product existence, stock, and quantity.
+     *
+     * @param object $request Request with body: ref (string), quantity (int >= 1)
+     */
     public function addItem(object $request): void
     {
         $userId = $request->user['sub'];
@@ -92,7 +112,11 @@ class CartController
         ]);
     }
 
-    /** Updates the quantity of an item in the cart. */
+    /**
+     * Updates the quantity of a cart item; rejects values below 1.
+     *
+     * @param object $request Request with params['id'] (cart_items.id) and body: quantity (int >= 1)
+     */
     public function updateItemQuantity(object $request): void
     {
         $userId = $request->user['sub'];
@@ -126,7 +150,11 @@ class CartController
         ]);
     }
 
-    /** Removes an item from the cart. */
+    /**
+     * Removes an item from the cart.
+     *
+     * @param object $request Request with params['id'] (cart_items.id)
+     */
     public function deleteItem(object $request): void
     {
         $userId = $request->user['sub'];
@@ -141,7 +169,11 @@ class CartController
         ]);
     }
 
-    /** Empties all items from the authenticated user's pending cart. */
+    /**
+     * Removes all items from the authenticated user's pending cart without deleting the cart.
+     *
+     * @param object $request Request with user context
+     */
     public function clearCart(object $request): void
     {
         $userId = $request->user['sub'];
@@ -159,7 +191,14 @@ class CartController
         ]);
     }
 
-    /** Merges a list of items from localStorage into the user's cart after login. */
+    /**
+     * Merges a list of items from localStorage into the user's cart after login.
+     *
+     * Items with invalid ref or zero quantity are skipped and reported in the errors list.
+     * Partial success is allowed — failures do not block successful inserts.
+     *
+     * @param object $request Request with body: items (array of {ref: string, quantity: int})
+     */
     public function mergeItems(object $request): void
     {
         $userId = $request->user['sub'];
@@ -197,7 +236,11 @@ class CartController
         ]);
     }
 
-    /** Cancels (soft-deletes) a cart by id. */
+    /**
+     * Soft-deletes a cart by setting its status to cancelled.
+     *
+     * @param object $request Request with params['id'] (carts.id)
+     */
     public function deleteCart(object $request): void
     {
         $userId = $request->user['sub'];
