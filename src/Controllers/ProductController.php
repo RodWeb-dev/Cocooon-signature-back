@@ -11,7 +11,13 @@ use App\Models\ProductModel;
 /** HTTP handlers for product endpoints. */
 class ProductController
 {
-    /** Returns all products, optionally filtered by query parameters. */
+    /**
+     * Returns all products, optionally filtered by query parameters.
+     *
+     * Accepted GET filters: collection_id, category_id, subcategory_id.
+     *
+     * @param object $request Request with optional query filters
+     */
     public function getAll(object $request): void
     {
         $filters = $request->query;
@@ -25,7 +31,11 @@ class ProductController
         ]);
     }
 
-    /** Returns a single product by slug, or 404 if not found. */
+    /**
+     * Returns a single product by slug, or 404 if not found.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
@@ -48,7 +58,11 @@ class ProductController
         ]);
     }
 
-    /** Returns the reviews for a product by slug. */
+    /**
+     * Returns all reviews for a product by slug, joined with reviewer name.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getReviews(object $request): void
     {
         $slug = $request->params['slug'];
@@ -62,7 +76,14 @@ class ProductController
         ]);
     }
 
-    /** Adds a review for a product; requires a delivered order from the requesting user. */
+    /**
+     * Adds a review for a product.
+     *
+     * Requires the requesting user to have at least one delivered order containing the product.
+     * Responds 403 if the eligibility check fails.
+     *
+     * @param object $request Request with params['slug'], body: rating (int 1–5), comment (string, optional)
+     */
     public function addReview(object $request): void
     {
         $userId = $request->user['sub'];

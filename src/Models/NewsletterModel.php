@@ -10,6 +10,7 @@ use PDO;
 /** Manages newsletter subscriptions in the newsletter_subscribers table. */
 class NewsletterModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

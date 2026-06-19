@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+/**
+ * Hard-coded stub implementation of OdooServiceInterface for local development.
+ *
+ * Uses real catalogue data from Corinne's Odoo instance (Plateau, Cadres N°520)
+ * so Cron scripts and controllers can be exercised without an Odoo connection.
+ */
 class OdooStubService implements OdooServiceInterface
 {
+    /**
+     * Returns a fixed list of product categories matching the Odoo production set.
+     *
+     * @return array<int, array{value: string, name: string}>
+     */
     public function getCategories(): array
     {
         return [
@@ -18,6 +29,11 @@ class OdooStubService implements OdooServiceInterface
         ];
     }
 
+    /**
+     * Returns a fixed list of product subcategories matching the Odoo production set.
+     *
+     * @return array<int, array{value: string, name: string}>
+     */
     public function getSubCategories(): array
     {
         return [
@@ -65,6 +81,11 @@ class OdooStubService implements OdooServiceInterface
         ];
     }
 
+    /**
+     * Returns two real product templates from Corinne's catalogue (Plateau, Cadres N°520).
+     *
+     * @return array<int, array{id: int, name: string, default_code: string|false, list_price: float, x_categorie: string|false, x_souscategorie: string|false, product_variant_ids: int[]}>
+     */
     public function getProducts(): array
     {
         return [
@@ -89,6 +110,14 @@ class OdooStubService implements OdooServiceInterface
         ];
     }
 
+    /**
+     * Returns stub variants for Plateau (id 26) and Cadres N°520 (id 17).
+     *
+     * display_name format: "Product name (dimension, Material)" or "Product name (Material)".
+     *
+     * @param  int   $templateId Odoo product.template id
+     * @return array<int, array{id: int, display_name: string, lst_price: float}> Empty array for unknown template ids
+     */
     public function getVariantsForTemplate(int $templateId): array
     {
         $variants = [
@@ -109,24 +138,49 @@ class OdooStubService implements OdooServiceInterface
         return $variants[$templateId] ?? [];
     }
 
+    /**
+     * Not yet stubbed — returns an empty array.
+     *
+     * @param  int   $odooOrderId Odoo sale.order id
+     * @return array Empty until stub data is defined
+     */
     public function getOrderStatus(int $odooOrderId): array
     {
         // TODO
         return [];
     }
 
+    /**
+     * Not yet stubbed — always returns true.
+     *
+     * @param  string $email Subscriber email address
+     * @return bool   Always true in stub
+     */
     public function addToNewsletter(string $email): bool
     {
         // TODO
         return true;
     }
 
+    /**
+     * Not yet stubbed — always returns 0.
+     *
+     * @param  array $orderData Order payload
+     * @return int   Always 0 in stub
+     */
     public function createOrder(array $orderData): int
     {
         // TODO
         return 0;
     }
 
+    /**
+     * Not yet stubbed — always returns true.
+     *
+     * @param  int   $odooOrderId  Odoo sale.order id
+     * @param  array $paymentData  Payment details
+     * @return bool  Always true in stub
+     */
     public function confirmPayment(int $odooOrderId, array $paymentData): bool
     {
         // TODO
