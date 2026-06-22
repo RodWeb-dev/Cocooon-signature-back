@@ -213,11 +213,19 @@ class AuthController
         $refreshToken = bin2hex(random_bytes(32));
         TokenModel::saveRefreshToken($user['id'], $refreshToken, time() + 604800);
 
+        setcookie('refresh_token', $refreshToken, [
+            'expires'  => time() + 604800,
+            'path'     => '/api/auth/refresh',
+            'secure'   => true,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+
         http_response_code(200);
         echo json_encode([
-            'data'    => ['access_token' => $accessToken, 'refresh_token' => $refreshToken],
+            'data'    => ['access_token' => $accessToken],
             'message' => ['key' => 'api.login', 'params' => (object)[]],
-            'error'   => null
+            'error'   => null,
         ]);
     }
 
@@ -228,18 +236,23 @@ class AuthController
      */
     public function logout(object $request): void
     {
-        $body = $request->body;
-
-        if(isset($body['refresh_token'])) {
-            $refreshToken = $body['refresh_token'];
-            TokenModel::deleteRefreshToken($refreshToken);
+        if (isset($_COOKIE['refresh_token'])) {
+            TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);
+    
+            setcookie('refresh_token', '', [
+                'expires'  => time() - 3600,
+                'path'     => '/api/auth/refresh',
+                'secure'   => true,
+                'httponly' => true,
+                'samesite' => 'Strict',
+            ]);
         }
-
+    
         http_response_code(200);
         echo json_encode([
             'data'    => null,
             'message' => ['key' => 'api.logout', 'params' => (object)[]],
-            'error'   => null
+            'error'   => null,
         ]);
     }
 
@@ -252,9 +265,7 @@ class AuthController
      */
     public function refresh(object $request): void
     {
-        $body = $request->body;
-
-        if(!isset($body['refresh_token'])) {
+        if(!isset($_COOKIE['refresh_token'])) {
             http_response_code(400);
             echo json_encode([
                 'data'    => null,
@@ -264,7 +275,7 @@ class AuthController
             exit;
         }
 
-        $token = TokenModel::findRefreshToken($body['refresh_token']);
+        $token = TokenModel::findRefreshToken($_COOKIE['refresh_token']);
         if(!$token || strtotime($token['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
@@ -277,6 +288,17 @@ class AuthController
 
         $user = UserModel::findById($token['owner']);
         $newAccessToken = $this->jwt->encode($user['id'], $user['role']);
+
+        $newRefreshToken = bin2hex(random_bytes(32));
+        TokenModel::saveRefreshToken($user['id'], $newRefreshToken, time() + 604800);
+
+        setcookie('refresh_token', $newRefreshToken, [
+            'expires'  => time() + 604800,
+            'path'     => '/api/auth/refresh',
+            'secure'   => true,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
 
         http_response_code(200);
         echo json_encode([
