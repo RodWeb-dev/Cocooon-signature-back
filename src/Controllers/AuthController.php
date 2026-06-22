@@ -20,7 +20,6 @@ class AuthController
 {
     private JWT $jwt;
     private EmailService $emailService;
-    private const ERROR = 'Une erreur est survenue...';
 
     public function __construct()
     {
@@ -43,8 +42,12 @@ class AuthController
         if(!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+                'data'    => null,
+                'message' => null,
+                'error'   => [
+                    'key'    => 'api.fields',
+                    'params' => ['fields' => implode(', ', $missing)]
+                ]
             ]);
             exit;
         }
@@ -52,8 +55,12 @@ class AuthController
         if(!RateLimit::check($action, $ip)) {
             http_response_code(429);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Veuillez réessayer plus tard'
+                'data'    => null,
+                'message' => null,
+                'error'   => [
+                    'key'    => 'api.rate_limit',
+                    'params' => (object)[]
+                ]
             ]);
             exit;
         }
@@ -61,8 +68,12 @@ class AuthController
         if(in_array('email', $fields) && !FilterInput::email($body['email'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Le format de l\'adresse mail est incorrect'
+                'data'    => null,
+                'message' => null,
+                'error'   => [
+                    'key'    => 'api.valid_mail',
+                    'params' => (object)[]
+                ]
             ]);
             exit;
         }
@@ -91,8 +102,12 @@ class AuthController
         if(!FilterInput::password($body['password'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Le format du mot de passe est incorrect'
+                'data'    => null,
+                'message' => null,
+                'error'   => [
+                    'key'    => 'api.valid_pwd',
+                    'params' => (object)[]
+                ]
             ]);
             exit;
         }
@@ -100,8 +115,12 @@ class AuthController
         if(UserModel::findByEmail($body['email'])) {
             http_response_code(409);
             echo json_encode([
-                'data'  => null,
-                'error' => 'L\'adresse mail est déjà utilisée'
+                'data'    => null,
+                'message' => null,
+                'error'   => [
+                    'key'    => 'api.used_mail',
+                    'params' => (object)[]
+                ]
             ]);
             exit;
         }
@@ -129,8 +148,9 @@ class AuthController
 
         http_response_code(201);
         echo json_encode([
-            'data'  => 'Inscription réussie. Un mail de confirmation vient de vous être envoyé.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.send_welcome', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -152,8 +172,9 @@ class AuthController
         if(!RateLimit::check($action, $body['email'])) {
             http_response_code(429);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Veuillez réessayer plus tard'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.rate_limit', 'params' => (object)[]],
             ]);
             exit;
         }
@@ -162,8 +183,9 @@ class AuthController
         if(!$user) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Identifiants incorrects'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.credentials', 'params' => (object)[]],
             ]);
 
             RateLimit::hit($action, $ip);
@@ -173,10 +195,11 @@ class AuthController
         if(!password_verify($body['password'], $user['hash_pwd'])) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Identifiants incorrects'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.credentials', 'params' => (object)[]],
             ]);
-            
+
             RateLimit::hit($action, $ip);
             RateLimit::hit($action, $body['email']);
             exit;
@@ -192,11 +215,9 @@ class AuthController
 
         http_response_code(200);
         echo json_encode([
-            'data' => [
-                'access_token'  => $accessToken,
-                'refresh_token' => $refreshToken
-            ],
-            'error' => null
+            'data'    => ['access_token' => $accessToken, 'refresh_token' => $refreshToken],
+            'message' => ['key' => 'api.login', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -215,9 +236,10 @@ class AuthController
         }
 
         http_response_code(200);
-         echo json_encode([
-            'data' => 'Déconnecté',
-            'error' => null
+        echo json_encode([
+            'data'    => null,
+            'message' => ['key' => 'api.logout', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -235,8 +257,9 @@ class AuthController
         if(!isset($body['refresh_token'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => self::ERROR
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.error', 'params' => (object)[]],
             ]);
             exit;
         }
@@ -245,8 +268,9 @@ class AuthController
         if(!$token || strtotime($token['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => self::ERROR
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.error', 'params' => (object)[]],
             ]);
             exit;
         }
@@ -259,6 +283,7 @@ class AuthController
             'data' => [
                 'access_token' => $newAccessToken
             ],
+            'message' => null,
             'error' => null
         ]);
     }
@@ -297,8 +322,9 @@ class AuthController
 
         http_response_code(200);
         echo json_encode([
-            'data' => 'Un email a été envoyé à l\'adresse indiquée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.forgot', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -318,8 +344,9 @@ class AuthController
         if(!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]],
             ]);
             exit;
         }
@@ -329,8 +356,9 @@ class AuthController
         if(!$token || strtotime($token['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => self::ERROR
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.error', 'params' => (object)[]],
             ]);
             exit;
         }
@@ -341,8 +369,9 @@ class AuthController
 
         http_response_code(200);
         echo json_encode([
-            'data' => 'Le mot de passe a été mis à jour.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.reset', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -361,8 +390,9 @@ class AuthController
         if(!$dbtoken || strtotime($dbtoken['expires_at']) < time()) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => self::ERROR
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.error', 'params' => (object)[]],
             ]);
             exit;
         }
@@ -372,8 +402,9 @@ class AuthController
 
         http_response_code(200);
         echo json_encode([
-            'data' => 'L\'adresse mail à été vérifiée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.verify', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

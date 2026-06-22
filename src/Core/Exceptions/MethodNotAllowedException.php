@@ -8,6 +8,6 @@ class MethodNotAllowedException extends HttpException
 {
     public function __construct()
     {
-        parent::__construct(405, 'Méthode non autorisée');
+        parent::__construct(405, 'api.error_405');
     }
 }

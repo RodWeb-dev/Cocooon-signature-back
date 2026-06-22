@@ -10,6 +10,7 @@ use PDO;
 /** PDO queries for the carts and cart_items tables. */
 class CartModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();

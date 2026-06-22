@@ -55,9 +55,17 @@ try {
     $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 } catch (HttpException $e) {
     http_response_code($e->getCode());
-    echo json_encode(['data' => null, 'error' => $e->getMessage()]);
+    echo json_encode([
+        'data'    => null,
+        'message' => null,
+        'error'   => ['key' => $e->getMessage(), 'params' => (object)[]]
+    ]);
 } catch (\Throwable $e) {
     error_log($e->getMessage());
     http_response_code(500);
-    echo json_encode(['data' => null, 'error' => 'Erreur interne du serveur']);
+    echo json_encode([
+        'data'    => null,
+        'message' => null,
+        'error'   => ['key' => 'api.error_500', 'params' => (object)[]]
+    ]);
 }

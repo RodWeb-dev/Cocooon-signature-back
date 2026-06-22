@@ -11,70 +11,111 @@ use App\Models\ProductModel;
 /** HTTP handlers for product endpoints. */
 class ProductController
 {
-    /** Returns all products, optionally filtered by query parameters. */
+    /**
+     * Returns all products, optionally filtered by query parameters.
+     *
+     * Accepted GET filters: collection_id, category_id, subcategory_id.
+     *
+     * @param object $request Request with optional query filters
+     */
     public function getAll(object $request): void
     {
         $filters = $request->query;
+        $lang = $request->lang();
 
-        $products = ProductModel::findAll($filters);
+        $products = ProductModel::findAll($filters, $lang);
 
         http_response_code(200);
         echo json_encode([
             'data'   => $products,
+            'message' => null,
             'error' => null
         ]);
     }
 
-    /** Returns a single product by slug, or 404 if not found. */
+    /**
+     * Returns a single product by slug, or 404 if not found.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
+        $lang = $request->lang();
 
-        $product = ProductModel::findBySlug($slug);
-
+        $product = ProductModel::findBySlug($slug, $lang)
+;
         if(!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Le produit demandé n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
             ]);
             exit;
         }
 
         http_response_code(200);
         echo json_encode([
-            'data'   => $product,
-            'error' => null
+            'data'    => $product,
+            'message' => null,
+            'error'   => null
         ]);
     }
 
-    /** Returns the reviews for a product by slug. */
+    /**
+     * Returns all reviews for a product by slug, joined with reviewer name.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getReviews(object $request): void
     {
         $slug = $request->params['slug'];
+        $lang = $request->lang();
 
-        $reviews = ProductModel::getReviews($slug);
+        $product = ProductModel::findBySlug($slug, $lang);
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode([
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
+            ]);
+            exit;
+        }
+
+        $reviews = ProductModel::getReviews($slug, $lang);
 
         http_response_code(200);
         echo json_encode([
             'data'   => $reviews,
+            'message' => null,
             'error' => null
         ]);
     }
 
-    /** Adds a review for a product; requires a delivered order from the requesting user. */
+    /**
+     * Adds a review for a product.
+     *
+     * Requires the requesting user to have at least one delivered order containing the product.
+     * Responds 403 if the eligibility check fails.
+     *
+     * @param object $request Request with params['slug'], body: rating (int 1–5), comment (string, optional)
+     */
     public function addReview(object $request): void
     {
         $userId = $request->user['sub'];
         $slug = $request->params['slug'];
+        $lang = $request->lang();
         $body = $request->body;
 
         $missing = FilterInput::required(['rating'], $body);
         if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data' => null,
-                'error' => 'La note est obligatoire'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.rev_rate', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -83,18 +124,20 @@ class ProductController
         if ($rating < 1 || $rating > 5) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La note doit être comprise entre 1 et 5'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.rev_value', 'params' => (object)[]]
             ]);
             exit;
         }
 
-        $product = ProductModel::findBySlug($slug);
+        $product = ProductModel::findBySlug($slug, $lang);
         if (!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Le produit demandé n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -102,8 +145,9 @@ class ProductController
         if (!OrderModel::hasDeliveredOrder($userId, $product['ref'])) {
             http_response_code(403);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Accès refusé'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.refused', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -117,8 +161,9 @@ class ProductController
 
         http_response_code(201);
         echo json_encode([
-            'data' => 'Votre avis a été publié.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.rev_ok', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

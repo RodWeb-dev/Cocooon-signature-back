@@ -9,29 +9,43 @@ use App\Models\CollectionModel;
 /** HTTP handlers for collection endpoints. */
 class CollectionController
 {
-    /** Returns all collections with their images. */
+    /**
+     * Returns all collections with their images.
+     *
+     * @param object $request Incoming HTTP request (no body or params required)
+     */
     public function getAll(object $request) : void
     {
-        $collections = CollectionModel::findAll();
+        $lang = $request->lang();
+
+        $collections = CollectionModel::findAll($lang);
 
         http_response_code(200);
         echo json_encode([
             'data'  => $collections,
+            'message' => null,
             'error' => null
         ]);
     }
 
-    /** Returns a single collection by slug with images and products, or 404 if not found. */
+    /**
+     * Returns a single collection by slug with its images and products (each with images), or 404.
+     *
+     * @param object $request Request with params['slug']
+     */
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
-        $collection = CollectionModel::findBySlug($slug);
+        $lang = $request->lang();
+
+        $collection = CollectionModel::findBySlug($slug, $lang);
 
         if(!$collection) {
             http_response_code(404);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La collection demandée n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_collection', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -39,6 +53,7 @@ class CollectionController
         http_response_code(200);
         echo json_encode([
             'data'  => $collection,
+            'message' => null,
             'error' => null
         ]);
     }

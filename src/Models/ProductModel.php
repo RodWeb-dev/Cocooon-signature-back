@@ -10,25 +10,36 @@ use PDO;
 /** PDO queries for the products, product_images and reviews tables. */
 class ProductModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();
     }
 
     /** Returns all products, optionally filtered by collection_id, category_id or subcategory_id. */
-    public static function findAll(array $filters = []): array
+    public static function findAll(array $filters = [], string $lang = 'fr'): array
     {
-        $sql = "SELECT * FROM products";
+        $sql = "SELECT * FROM products AS p";
+        if ($lang !== 'fr') {
+            $sql = "SELECT p.ref, p.delay, p.stock, p.category_id, p.subcategory_id, p.collection_id,
+                        COALESCE(t.slug, p.slug)               AS slug,
+                        COALESCE(t.name, p.name)               AS name,
+                        COALESCE(t.description, p.description) AS description,
+                        COALESCE(t.materials, p.materials)     AS materials,
+                        COALESCE(t.dimensions, p.dimensions)   AS dimensions
+                    FROM products AS p
+                    LEFT JOIN product_translations AS t ON t.product_ref = p.ref AND t.lang = :lang";
+        }
         
         $allowed = ['collection_id', 'category_id', 'subcategory_id'];
         $whereClauses = [];
         $params = [];
-        if (!empty($filters)) {
+        if (!empty($filters) ) {
             foreach ($filters as $key => $value) {
                 if (!in_array($key, $allowed)) {
                     continue;
                 }
-                $whereClauses[] = "$key = :$key";
+                $whereClauses[] = "p.$key = :$key";
                 $params[":$key"] = $value;
             }
             $sql .= ' WHERE ' . implode(' AND ', $whereClauses);
@@ -41,37 +52,72 @@ class ProductModel
                 $stmt->bindValue($param, $value, PDO::PARAM_INT);
             }
         }
+        if ($lang !== 'fr') {
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+        }
 
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /** Returns a product row by slug, or null if not found. */
-    public static function findBySlug(string $slug): ?array
+    /** Returns a product with its images by slug, or null if not found. */
+    public static function findBySlug(string $slug, string $lang): ?array
     {
-        $sql = "SELECT * FROM products WHERE slug = :slug";
+        $product = [];
+        if ($lang !== 'fr') {
+            $sql = "SELECT p.ref, p.delay, p.stock, p.category_id, p.subcategory_id, p.collection_id,
+                        COALESCE(t.slug, p.slug)               AS slug,
+                        COALESCE(t.name, p.name)               AS name,
+                        COALESCE(t.description, p.description) AS description,
+                        COALESCE(t.materials, p.materials)     AS materials,
+                        COALESCE(t.dimensions, p.dimensions)   AS dimensions
+                    FROM products AS p
+                    INNER JOIN product_translations AS t ON t.product_ref = p.ref AND t.lang = :lang
+                    WHERE t.slug = :slug";
+
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+            $stmt->execute();
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        if (empty($product)) {
+            $sql = "SELECT * FROM products WHERE slug = :slug";
+
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->execute();
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        $sql = "SELECT pi.*
+                FROM product_images AS pi
+                JOIN products AS p ON pi.ref = p.ref
+                WHERE p.ref = :ref
+                ORDER BY pi.ref, pi.display_order";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->bindValue(':ref', $product['ref'], PDO::PARAM_STR);
         $stmt->execute();
-        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        $product['images'] = $stmt->fetchAll(PDO::PARAM_STR);
+
         return $product ?: null;
     }
 
     /** Returns all reviews for a product, joined with reviewer firstname and lastname. */
-    public static function getReviews(string $slug): array
+    public static function getReviews(string $slug, string $lang): array
     {
-        $sql = "
-            SELECT r.*, u.firstname, u.lastname
-            FROM reviews AS r
-            JOIN users AS u ON r.owner = u.id
-            JOIN products AS p ON r.ref = p.ref
-            WHERE p.slug = :slug
+        $ref = self::findRefBySlug($slug, $lang);
+        $sql = "SELECT r.*, u.firstname, u.lastname
+                FROM reviews AS r
+                JOIN users AS u ON r.owner = u.id
+                WHERE r.ref = :ref
         ";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->bindValue(':ref', $ref, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -136,5 +182,34 @@ class ProductModel
         $stmt->execute();
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
         return $product ?: null;
+    }
+
+    private static function findRefBySlug(string $slug, string $lang): ?string
+    {
+        $ref = '';
+        if ($lang !== 'fr') {
+            $sql = "SELECT product_ref AS ref FROM product_translations
+                    WHERE slug = :slug AND lang = :lang";
+
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $ref = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        if (!$ref) {
+             $sql = "SELECT ref FROM products
+                    WHERE slug = :slug";
+
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $ref = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        return $ref ? $ref['ref'] : null;
     }
 }

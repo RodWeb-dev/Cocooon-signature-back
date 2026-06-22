@@ -10,6 +10,7 @@ use PDO;
 /** PDO queries for the users, addresses, reset_pwd_tokens and refresh_tokens tables. */
 class UserModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();
@@ -65,6 +66,7 @@ class UserModel
         return $id['id'];
     }
 
+    /** Sets email_verified = 1 for the given user. */
     public static function markEmailVerified(string $userId): void
     {
         $sql = "UPDATE users SET email_verified = 1
@@ -138,7 +140,13 @@ class UserModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /** Inserts a delivery address and returns its new id. */
+    /**
+     * Inserts a delivery address for the user and returns its new id.
+     *
+     * @param  string $userId Authenticated user UUID
+     * @param  array  $data   Address fields: name, address, postal_code, city, country (optional)
+     * @return int            Inserted row id
+     */
     public static function addAddress(string $userId, array $data): int
     {
         $sql = "

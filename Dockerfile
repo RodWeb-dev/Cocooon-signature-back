@@ -1,6 +1,6 @@
 FROM php:8.4-apache
 
-RUN apt-get update && apt-get install -y libicu-dev zip unzip libzip-dev \
+RUN apt-get update && apt-get install -y libicu-dev libgd-dev libzip-dev zip unzip \
     # Extensions PHP nécessaires
     && docker-php-ext-install \
     pdo \
@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y libicu-dev zip unzip libzip-dev \
     mysqli \
     intl \
     zip \
+    gd \
     # Activer le module Apache rewrite (pour les routes REST)
     && a2enmod rewrite
 

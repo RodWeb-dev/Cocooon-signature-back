@@ -8,6 +8,7 @@ use App\Controllers\UserController;
 use App\Controllers\ProductController;
 use App\Controllers\CollectionController;
 use App\Controllers\CartController;
+use App\Controllers\CategoryController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
 use App\Controllers\NewsletterController;
@@ -57,10 +58,14 @@ class Routes
         $router->get(self::COLLECTIONS, [CollectionController::class, 'getAll']);
         $router->get(self::COLLECTIONS . '/{slug}', [CollectionController::class, 'getOne']);
 
+        // Categories
+        $router->get('/api/categories', [CategoryController::class, 'getCategories']);
+        $router->get('/api/subcategories', [CategoryController::class, 'getSubcategories']);
+
         // Cart
         $router->get(self::CART, [CartController::class, 'getCart'], auth: true);
         $router->post(self::CART . '/items', [CartController::class, 'addItem'], auth: true);
-        $router->patch(self::CART . '/items/{id}', [CartController::class, 'updateItem'], auth: true);
+        $router->patch(self::CART . '/items/{id}', [CartController::class, 'updateItemQuantity'], auth: true);
         $router->delete(self::CART . '/items/{id}', [CartController::class, 'deleteItem'], auth: true);
         $router->delete(self::CART, [CartController::class, 'clearCart'], auth: true);
         $router->post(self::CART . '/merge', [CartController::class, 'mergeItems'], auth: true);

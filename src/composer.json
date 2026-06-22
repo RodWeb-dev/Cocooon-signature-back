@@ -16,7 +16,8 @@
         "getbrevo/brevo-php": "^4.0",
         "symfony/http-client": "^8.1",
         "nyholm/psr7": "^1.8",
-        "payplug/payplug-php": "^4.0"
+        "payplug/payplug-php": "^4.0",
+        "phpoffice/phpspreadsheet": "^5.8"
     },
     "config": {
         "allow-plugins": {

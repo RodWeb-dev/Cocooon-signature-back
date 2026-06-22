@@ -10,17 +10,30 @@ use PDO;
 /** PDO queries for the collections and collection_images tables. */
 class CollectionModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();
     }
 
     /** Returns all collections with their images ordered by display_order. */
-    public static function findAll() : array
+    public static function findAll(string $lang = 'fr') : array
     {
         $sql = "SELECT * FROM collections";
 
+        if ($lang !== 'fr') {
+            $sql = "SELECT c.id,
+                        COALESCE(t.slug, c.slug)               AS slug,
+                        COALESCE(t.name, c.name)               AS name,
+                        COALESCE(t.description, c.description) AS description
+                    FROM collections AS c
+                    LEFT JOIN collection_translations AS t ON t.collection_id = c.id AND t.lang = :lang";
+        }
+
         $stmt = self::getDb()->prepare($sql);
+        if ($lang !== 'fr') {
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+        }
         $stmt->execute();
 
         $collections = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -44,21 +57,39 @@ class CollectionModel
     }
 
     /** Returns a collection with its images and its products (each with images), or null. */
-    public static function findBySlug(string $slug): ?array
+    public static function findBySlug(string $slug, string $lang): ?array
     {
-        $sql = "
-            SELECT c.*, i.url, i.alt
-            FROM collections AS c
-            LEFT JOIN collection_images AS i ON i.collection_id = c.id
-            WHERE slug = :slug
-            ORDER BY i.display_order
-        ";
+        $collectionImages = [];
+        if ($lang !== 'fr') {
+            $sql = "SELECT c.id, i.url, i.alt,
+                        COALESCE(t.slug, c.slug)               AS slug,
+                        COALESCE(t.name, c.name)               AS name,
+                        COALESCE(t.description, c.description) AS description
+                    FROM collections AS c
+                    INNER JOIN collection_translations AS t ON t.collection_id = c.id AND t.lang = :lang
+                    LEFT JOIN collection_images AS i ON i.collection_id = c.id
+                    WHERE t.slug = :slug
+                    ORDER BY i.display_order";
 
-        $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
-        $stmt->execute();
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+            $stmt->execute();
+            $collectionImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
-        $collectionImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($collectionImages)) {
+            $sql = "SELECT c.*, i.url, i.alt
+                    FROM collections AS c
+                    LEFT JOIN collection_images AS i ON i.collection_id = c.id
+                    WHERE slug = :slug
+                    ORDER BY i.display_order";
+
+            $stmt = self::getDb()->prepare($sql);
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->execute();
+            $collectionImages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         if (empty($collectionImages)) {
             return null;
@@ -81,19 +112,32 @@ class CollectionModel
 
         $sql = "SELECT * FROM products WHERE collection_id = :collection_id";
 
+        if ($lang !== 'fr') {
+            $sql = "SELECT p.ref, p.delay, p.stock, p.category_id, p.subcategory_id, p.collection_id,
+                        COALESCE(t.slug, p.slug)               AS slug,
+                        COALESCE(t.name, p.name)               AS name,
+                        COALESCE(t.description, p.description) AS description,
+                        COALESCE(t.materials, p.materials)     AS materials,
+                        COALESCE(t.dimensions, p.dimensions)   AS dimensions
+                    FROM products AS p
+                    LEFT JOIN product_translations AS t ON t.product_ref = p.ref AND t.lang = :lang
+                    WHERE p.collection_id = :collection_id";
+        }
+
         $stmt = self::getDb()->prepare($sql);
         $stmt->bindValue(':collection_id', $collection['id'], PDO::PARAM_INT);
+        if ($lang !== 'fr') {
+            $stmt->bindValue(':lang', $lang, PDO::PARAM_STR);
+        }
         $stmt->execute();
 
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $sql = "
-            SELECT pi.*
-            FROM product_images AS pi
-            JOIN products ON pi.ref = products.ref
-            WHERE products.collection_id = :collection_id
-            ORDER BY pi.ref, pi.display_order
-        ";
+        $sql = "SELECT pi.*
+                FROM product_images AS pi
+                JOIN products ON pi.ref = products.ref
+                WHERE products.collection_id = :collection_id
+                ORDER BY pi.ref, pi.display_order";
 
         $stmt = self::getDb()->prepare($sql);
         $stmt->bindValue(':collection_id', $collection['id'], PDO::PARAM_INT);

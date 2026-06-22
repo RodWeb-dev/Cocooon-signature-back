@@ -6,7 +6,7 @@ CREATE TABLE products (
     dimensions VARCHAR(100),
     materials VARCHAR(100),
     price DECIMAL(10, 2) NOT NULL,
-    availability ENUM('in_stock', 'made_to_order') DEFAULT 'in_stock',
+    delay INT DEFAULT 1,
     stock INT DEFAULT 0,
     category_id INT,
     subcategory_id INT,
