@@ -29,8 +29,9 @@ class NewsletterController
 
         http_response_code(201);
         echo json_encode([
-            'data'  => 'Inscription enregistrée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.nl_subscribe', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -53,8 +54,9 @@ class NewsletterController
 
         http_response_code(201);
         echo json_encode([
-            'data'  => 'Vos préférences ont bien été prises en compte.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.nl_toggle', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

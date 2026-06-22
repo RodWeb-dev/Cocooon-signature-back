@@ -8,6 +8,6 @@ class NotFoundException extends HttpException
 {
     public function __construct()
     {
-        parent::__construct(404, 'Non trouvé');
+        parent::__construct(404, 'api.error_404');
     }
 }
