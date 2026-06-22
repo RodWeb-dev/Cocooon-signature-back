@@ -26,6 +26,7 @@ class UserController
         http_response_code(200);
         echo json_encode([
             'data'  => $user,
+            'message' => null,
             'error' => null
         ]);
     }
@@ -45,8 +46,9 @@ class UserController
         if(empty($body)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Pas de données'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_data', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -62,8 +64,9 @@ class UserController
             if(!$mail) {
                 http_response_code(400);
                 echo json_encode([
-                    'data'  => null,
-                    'error' => 'Le format de l\'adresse mail est incorrect'
+                    'data'    => null,
+                    'message' => null,
+                    'error'   => ['key' => 'api.valid_mail', 'params' => (object)[]]
                 ]);
                 exit;
             }
@@ -73,8 +76,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'Vos informations ont été mises à jour.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.user_update', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -93,8 +97,9 @@ class UserController
         if(!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
             ]);
             exit;
         }
@@ -103,8 +108,9 @@ class UserController
         if(!password_verify($body['current_password'], $user['hash_pwd'])) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les mots de passes ne correspondent pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.same_pwd', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -112,8 +118,9 @@ class UserController
         if(!FilterInput::password($body['new_password'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Le format du mot de passe est incorrect'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.valid_pwd', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -124,8 +131,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'Le mot de passe a bien été modifié.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.update_pwd', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -141,8 +149,9 @@ class UserController
         if(!isset($request->body['password'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Le mot de passe est obligatoire'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.required_pwd', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -152,8 +161,9 @@ class UserController
         if(!password_verify($password, $user['hash_pwd'])) {
             http_response_code(401);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Identifiants incorrects'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.same_pwd', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -162,8 +172,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'Le compte a bien été supprimé.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.user_del', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -180,6 +191,7 @@ class UserController
         http_response_code(200);
         echo json_encode([
             'data'  => $addresses,
+            'message' => null,
             'error' => null
         ]);
     }
@@ -199,8 +211,9 @@ class UserController
         if(!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
             ]);
             exit;
         }
@@ -215,8 +228,9 @@ class UserController
 
         http_response_code(201);
         echo json_encode([
-            'data'  => 'L\'adresse a bien été ajoutée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.address_add', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -234,8 +248,9 @@ class UserController
         if(empty($body)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Pas de données'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_data', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -250,8 +265,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'L\'adresse a bien été modifiée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.address_update', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -269,8 +285,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'L\'adresse a bien été supprimée.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.address_del', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

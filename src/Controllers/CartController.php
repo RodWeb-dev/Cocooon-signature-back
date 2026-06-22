@@ -28,28 +28,24 @@ class CartController
         $product = ProductModel::findByRef($ref);
         if (!$product) {
             return [
-                'code'  => 404,
-                'data'  => null,
-                'error' => 'Produit inexistant : ' . $ref
+                'code'    => 404,
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => ['ref' => $ref]]
             ];
         }
-        if ($product['availability'] === 'in_stock' && $product['stock'] < $quantity) {
-            return [
-                'code'  => 409,
-                'data'  => null,
-                'error' => 'Stock insuffisant : ' . $ref
-            ];
-        }
+
         $cart = CartModel::findPendingCart($userId);
         $cartId = $cart ? $cart['id'] : CartModel::create($userId);
 
         CartModel::addItem($cartId, $ref, $quantity, $product['price']);
 
         return [
-                'code'  => 201,
-                'data'  => 'Article ajouté au panier',
-                'error' => null
-            ];
+            'code'    => 201,
+            'data'    => null,
+            'message' => ['key' => 'api.addtocart', 'params' => (object)[]],
+            'error'   => null
+        ];
     }
 
     /**
@@ -66,7 +62,8 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $cart ?? [],
+            'data'    => $cart ?? [],
+            'message' => null,
             'error' => null
         ]);
     }
@@ -86,8 +83,9 @@ class CartController
         if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'Les champs suivants sont absents : '. implode(', ', $missing)
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
             ]);
             exit;
         }
@@ -97,8 +95,9 @@ class CartController
         if ($quantity < 1) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La quantité doit être superieur à zéro.'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.quantity', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -107,8 +106,9 @@ class CartController
 
         http_response_code($http['code']);
         echo json_encode([
-            'data'  => $http['data'],
-            'error' => $http['error']
+            'data'    => $http['data'],
+            'message' => $http['message'],
+            'error'   => $http['error']
         ]);
     }
 
@@ -125,18 +125,20 @@ class CartController
         if (!isset($request->body['quantity'])) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La quantité est obligatoire.'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.quantity', 'params' => (object)[]]
             ]);
             exit;
         }
-        
+
         $quantity = (int) $request->body['quantity'];
         if ($quantity < 1) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La quantité doit être supérieure à zéro.'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.qty_mini', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -145,8 +147,9 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'La quantité a été mise à jour.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.qty_update', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -164,8 +167,9 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'L\'article a été retiré du panier.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.item_del', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -186,8 +190,9 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'Le panier a été vidé.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.cart_clear', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 
@@ -206,7 +211,11 @@ class CartController
 
         if (!is_array($items) || empty($items)) {
             http_response_code(400);
-            echo json_encode(['data' => null, 'error' => 'Aucun article à fusionner.']);
+            echo json_encode([
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.cart_merge', 'params' => (object)[]]
+            ]);
             exit;
         }
 
@@ -232,7 +241,8 @@ class CartController
                 'merged' => $successCount,
                 'errors' => $errors
             ],
-            'error' => null
+            'message' => null,
+            'error'   => null
         ]);
     }
 
@@ -250,8 +260,9 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => 'Le panier a été supprimé.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.cart_del', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

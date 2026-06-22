@@ -21,6 +21,7 @@ class CollectionController
         http_response_code(200);
         echo json_encode([
             'data'  => $collections,
+            'message' => null,
             'error' => null
         ]);
     }
@@ -38,8 +39,9 @@ class CollectionController
         if(!$collection) {
             http_response_code(404);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La collection demandée n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_collection', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -47,6 +49,7 @@ class CollectionController
         http_response_code(200);
         echo json_encode([
             'data'  => $collection,
+            'message' => null,
             'error' => null
         ]);
     }

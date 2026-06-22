@@ -27,6 +27,7 @@ class ProductController
         http_response_code(200);
         echo json_encode([
             'data'   => $products,
+            'message' => null,
             'error' => null
         ]);
     }
@@ -45,16 +46,18 @@ class ProductController
         if(!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Le produit demandé n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
             ]);
             exit;
         }
 
         http_response_code(200);
         echo json_encode([
-            'data'   => $product,
-            'error' => null
+            'data'    => $product,
+            'message' => null,
+            'error'   => null
         ]);
     }
 
@@ -72,6 +75,7 @@ class ProductController
         http_response_code(200);
         echo json_encode([
             'data'   => $reviews,
+            'message' => null,
             'error' => null
         ]);
     }
@@ -94,8 +98,9 @@ class ProductController
         if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data' => null,
-                'error' => 'La note est obligatoire'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.rev_rate', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -104,8 +109,9 @@ class ProductController
         if ($rating < 1 || $rating > 5) {
             http_response_code(400);
             echo json_encode([
-                'data'  => null,
-                'error' => 'La note doit être comprise entre 1 et 5'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.rev_value', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -114,8 +120,9 @@ class ProductController
         if (!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Le produit demandé n\'existe pas'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -123,8 +130,9 @@ class ProductController
         if (!OrderModel::hasDeliveredOrder($userId, $product['ref'])) {
             http_response_code(403);
             echo json_encode([
-                'data'   => null,
-                'error' => 'Accès refusé'
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.refused', 'params' => (object)[]]
             ]);
             exit;
         }
@@ -138,8 +146,9 @@ class ProductController
 
         http_response_code(201);
         echo json_encode([
-            'data' => 'Votre avis a été publié.',
-            'error' => null
+            'data'    => null,
+            'message' => ['key' => 'api.rev_ok', 'params' => (object)[]],
+            'error'   => null
         ]);
     }
 }

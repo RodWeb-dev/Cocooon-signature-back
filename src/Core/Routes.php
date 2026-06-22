@@ -60,7 +60,7 @@ class Routes
         // Cart
         $router->get(self::CART, [CartController::class, 'getCart'], auth: true);
         $router->post(self::CART . '/items', [CartController::class, 'addItem'], auth: true);
-        $router->patch(self::CART . '/items/{id}', [CartController::class, 'updateItem'], auth: true);
+        $router->patch(self::CART . '/items/{id}', [CartController::class, 'updateItemQuantity'], auth: true);
         $router->delete(self::CART . '/items/{id}', [CartController::class, 'deleteItem'], auth: true);
         $router->delete(self::CART, [CartController::class, 'clearCart'], auth: true);
         $router->post(self::CART . '/merge', [CartController::class, 'mergeItems'], auth: true);

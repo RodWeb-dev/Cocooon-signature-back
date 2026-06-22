@@ -8,6 +8,6 @@ class ForbiddenException extends HttpException
 {
     public function __construct()
     {
-        parent::__construct(403, 'Accès interdit');
+        parent::__construct(403, 'api.error_403');
     }
 }
