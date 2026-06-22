@@ -21,8 +21,9 @@ class ProductController
     public function getAll(object $request): void
     {
         $filters = $request->query;
+        $lang = $request->lang();
 
-        $products = ProductModel::findAll($filters);
+        $products = ProductModel::findAll($filters, $lang);
 
         http_response_code(200);
         echo json_encode([
@@ -40,9 +41,10 @@ class ProductController
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
+        $lang = $request->lang();
 
-        $product = ProductModel::findBySlug($slug);
-
+        $product = ProductModel::findBySlug($slug, $lang)
+;
         if(!$product) {
             http_response_code(404);
             echo json_encode([
@@ -69,8 +71,20 @@ class ProductController
     public function getReviews(object $request): void
     {
         $slug = $request->params['slug'];
+        $lang = $request->lang();
 
-        $reviews = ProductModel::getReviews($slug);
+        $product = ProductModel::findBySlug($slug, $lang);
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode([
+                'data'    => null,
+                'message' => null,
+                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
+            ]);
+            exit;
+        }
+
+        $reviews = ProductModel::getReviews($slug, $lang);
 
         http_response_code(200);
         echo json_encode([
@@ -92,6 +106,7 @@ class ProductController
     {
         $userId = $request->user['sub'];
         $slug = $request->params['slug'];
+        $lang = $request->lang();
         $body = $request->body;
 
         $missing = FilterInput::required(['rating'], $body);
@@ -116,7 +131,7 @@ class ProductController
             exit;
         }
 
-        $product = ProductModel::findBySlug($slug);
+        $product = ProductModel::findBySlug($slug, $lang);
         if (!$product) {
             http_response_code(404);
             echo json_encode([

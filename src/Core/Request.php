@@ -56,4 +56,10 @@ class Request
 
         return new self($method, $uri, $params, $_GET, $body, $user);
     }
+
+    public function lang(): string
+    {
+        $lang = $this->query['lang'] ?? 'fr';
+        return in_array($lang, ['fr', 'en'], true) ? $lang : 'fr';
+    }
 }
