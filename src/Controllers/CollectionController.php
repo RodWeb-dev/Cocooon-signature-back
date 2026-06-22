@@ -16,7 +16,9 @@ class CollectionController
      */
     public function getAll(object $request) : void
     {
-        $collections = CollectionModel::findAll();
+        $lang = $request->lang();
+
+        $collections = CollectionModel::findAll($lang);
 
         http_response_code(200);
         echo json_encode([
@@ -34,7 +36,9 @@ class CollectionController
     public function getOne(object $request): void
     {
         $slug = $request->params['slug'];
-        $collection = CollectionModel::findBySlug($slug);
+        $lang = $request->lang();
+
+        $collection = CollectionModel::findBySlug($slug, $lang);
 
         if(!$collection) {
             http_response_code(404);

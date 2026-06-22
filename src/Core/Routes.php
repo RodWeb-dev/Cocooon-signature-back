@@ -8,6 +8,7 @@ use App\Controllers\UserController;
 use App\Controllers\ProductController;
 use App\Controllers\CollectionController;
 use App\Controllers\CartController;
+use App\Controllers\CategoryController;
 use App\Controllers\OrderController;
 use App\Controllers\PaymentController;
 use App\Controllers\NewsletterController;
@@ -56,6 +57,10 @@ class Routes
         // Collections
         $router->get(self::COLLECTIONS, [CollectionController::class, 'getAll']);
         $router->get(self::COLLECTIONS . '/{slug}', [CollectionController::class, 'getOne']);
+
+        // Categories
+        $router->get('/api/categories', [CategoryController::class, 'getCategories']);
+        $router->get('/api/subcategories', [CategoryController::class, 'getSubcategories']);
 
         // Cart
         $router->get(self::CART, [CartController::class, 'getCart'], auth: true);
