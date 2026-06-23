@@ -216,6 +216,7 @@ class AuthController
         setcookie('refresh_token', $refreshToken, [
             'expires'  => time() + 604800,
             'path'     => '/api/auth/refresh',
+            'domain'   => 'cocoon-signature.fr',
             'secure'   => true,
             'httponly' => true,
             'samesite' => 'Strict',
@@ -242,6 +243,7 @@ class AuthController
             setcookie('refresh_token', '', [
                 'expires'  => time() - 3600,
                 'path'     => '/api/auth/refresh',
+                'domain'   => 'cocoon-signature.fr',
                 'secure'   => true,
                 'httponly' => true,
                 'samesite' => 'Strict',
@@ -277,6 +279,7 @@ class AuthController
 
         $token = TokenModel::findRefreshToken($_COOKIE['refresh_token']);
         if(!$token || strtotime($token['expires_at']) < time()) {
+            if($token) {TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);}
             http_response_code(401);
             echo json_encode([
                 'data'    => null,
@@ -287,14 +290,17 @@ class AuthController
         }
 
         $user = UserModel::findById($token['owner']);
+        
         $newAccessToken = $this->jwt->encode($user['id'], $user['role']);
-
         $newRefreshToken = bin2hex(random_bytes(32));
+
+        TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);
         TokenModel::saveRefreshToken($user['id'], $newRefreshToken, time() + 604800);
 
         setcookie('refresh_token', $newRefreshToken, [
             'expires'  => time() + 604800,
             'path'     => '/api/auth/refresh',
+            'domain'   => 'cocoon-signature.fr',
             'secure'   => true,
             'httponly' => true,
             'samesite' => 'Strict',

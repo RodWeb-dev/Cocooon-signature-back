@@ -15,7 +15,7 @@ $dotenv->required([
     'APP_ENV',
     'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
     'JWT_SECRET', 'JWT_EXPIRATION',
-    'ODOO_URL', 'ODOO_DB', 'ODOO_USER', 'ODOO_PASSWORD',
+    'ODOO_URL', 'ODOO_DB', 'ODOO_USER', 'ODOO_API_KEY',
     'BREVO_API_KEY',
 ]);
 
