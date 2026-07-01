@@ -4,5 +4,6 @@ CREATE TABLE contact_messages (
     mail VARCHAR(100) NOT NULL,
     subject VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
+    status ENUM ('Envoyé', 'Lu', 'Traité') DEFAULT 'Envoyé',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

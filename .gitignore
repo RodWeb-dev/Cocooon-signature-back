@@ -14,9 +14,6 @@ vendor/
 # Node dependencies
 node_modules
 
-# Claude
-.claude/
-
 # Dossier temporaires
 tmp/
 uploads/

@@ -43,12 +43,14 @@ class FilterInput
     /** Returns true if the password meets strength requirements: min 10 chars, upper, lower, digit, special char. */
     public static function password(string $password): bool
     {
-        if(strlen($password) < 10) {return false;}
-        if(!preg_match('/[A-Z]/', $password)) {return false;}
-        if(!preg_match('/[a-z]/', $password)) {return false;}
-        if(!preg_match('/[\d]/', $password)) {return false;}
-        if(!preg_match('/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?\/~]/', $password)) {return false;}
+        $return = true;
 
-        return true;
+        if(strlen($password) < 10) {$return = false;}
+        if(!preg_match('/[A-Z]/', $password)) {$return = false;}
+        if(!preg_match('/[a-z]/', $password)) {$return = false;}
+        if(!preg_match('/[\d]/', $password)) {$return = false;}
+        if(!preg_match('/[!@#$%^&*()\-_=+\[\]{}|;:,.<>?\/~]/', $password)) {$return = false;}
+
+        return $return;
     }
 }
