@@ -19,19 +19,19 @@ class NewsletterController
      */
     public function subscribe(object $request): void
     {
-        $email = $request->body['email'];
+        $email = $request->body["email"];
         $userId = null;
         if (isset($request->user)) {
-            $userId = $request->user['sub'];
+            $userId = $request->user["sub"];
         }
-    
+
         NewsletterModel::subscribe($email, $userId);
 
         http_response_code(201);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.nl_subscribe', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.nl_subscribe", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -42,21 +42,21 @@ class NewsletterController
      */
     public function toggleNewsletter(object $request): void
     {
-        $userId = $request->user['sub'];
-        $subscribed = $request->body['subscribed'];
+        $userId = $request->user["sub"];
+        $subscribed = $request->body["subscribed"];
 
-        if($subscribed) {
+        if ($subscribed) {
             $user = UserModel::findById($userId);
-            NewsletterModel::subscribe($user['email'], $userId);
+            NewsletterModel::subscribe($user["email"], $userId);
         } else {
             NewsletterModel::unsubscribe($userId);
         }
 
         http_response_code(201);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.nl_toggle', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.nl_toggle", "params" => (object) []],
+            "error" => null,
         ]);
     }
 }

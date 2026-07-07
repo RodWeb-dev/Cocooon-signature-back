@@ -14,7 +14,7 @@ class CategoryController
      *
      * @param object $request Incoming HTTP request (no body or params required)
      */
-    public function getCategories(object $request) : void
+    public function getCategories(object $request): void
     {
         $lang = $request->lang();
 
@@ -22,9 +22,9 @@ class CategoryController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $categories,
-            'message' => null,
-            'error' => null
+            "data" => $categories,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -33,7 +33,7 @@ class CategoryController
      *
      * @param object $request Incoming HTTP request (no body or params required)
      */
-    public function getSubcategories(object $request) : void
+    public function getSubcategories(object $request): void
     {
         $lang = $request->lang();
 
@@ -41,9 +41,9 @@ class CategoryController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $subcategories,
-            'message' => null,
-            'error' => null
+            "data" => $subcategories,
+            "message" => null,
+            "error" => null,
         ]);
     }
 }

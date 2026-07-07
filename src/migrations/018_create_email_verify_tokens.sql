@@ -1,10 +1,10 @@
 CREATE TABLE verify_email_tokens (
     id INT AUTO_INCREMENT PRIMARY KEY,
     owner VARCHAR(60) NOT NULL,
-    value VARCHAR(60) NOT NULL UNIQUE,
+    value VARCHAR(64) NOT NULL UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     expires_at DATETIME NOT NULL,
-    FOREIGN KEY (owner) REFERENCES users(id),
+    FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_owner (owner),
     INDEX idx_value (value)
 );

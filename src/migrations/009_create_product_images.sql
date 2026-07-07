@@ -4,6 +4,6 @@ CREATE TABLE product_images (
     url VARCHAR(255) NOT NULL,
     alt TEXT,
     display_order INT,
-    FOREIGN KEY (ref) REFERENCES products(ref),
+    FOREIGN KEY (ref) REFERENCES products(ref) ON DELETE CASCADE,
     INDEX idx_ref (ref)
 );

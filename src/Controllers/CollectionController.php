@@ -14,7 +14,7 @@ class CollectionController
      *
      * @param object $request Incoming HTTP request (no body or params required)
      */
-    public function getAll(object $request) : void
+    public function getAll(object $request): void
     {
         $lang = $request->lang();
 
@@ -22,9 +22,9 @@ class CollectionController
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $collections,
-            'message' => null,
-            'error' => null
+            "data" => $collections,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -35,26 +35,29 @@ class CollectionController
      */
     public function getOne(object $request): void
     {
-        $slug = $request->params['slug'];
+        $slug = $request->params["slug"];
         $lang = $request->lang();
 
         $collection = CollectionModel::findBySlug($slug, $lang);
 
-        if(!$collection) {
+        if (!$collection) {
             http_response_code(404);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_collection', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.no_collection",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $collection,
-            'message' => null,
-            'error' => null
+            "data" => $collection,
+            "message" => null,
+            "error" => null,
         ]);
     }
 }

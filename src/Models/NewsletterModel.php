@@ -23,10 +23,11 @@ class NewsletterModel
                 (owner, email)
                 VALUES (:owner, :email)
                 ON DUPLICATE KEY UPDATE
-                owner = COALESCE(owner, :owner)";
+                owner = COALESCE(owner, :owner_update)";
 
         $stmt = self::getDb()->prepare($sql);
         $stmt->bindValue(':owner', $userId);
+        $stmt->bindValue(':owner_update', $userId);
         $stmt->bindValue(':email', $email);
         $stmt->execute();
     }

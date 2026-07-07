@@ -19,7 +19,7 @@ class RateLimit
     private static function getDB() : PDO {
         return DBConnection::getInstance();
     }
-    
+
     /** Returns false if the identifier is currently blocked for the given action, true otherwise. */
     public static function check(string $action, string $identifier): bool
     {
@@ -40,7 +40,7 @@ class RateLimit
         }
         return true;
     }
-    
+
     /** Records an attempt and blocks the identifier if the configured limit is reached within the window. */
     public static function hit(string $action, string $identifier): void
     {

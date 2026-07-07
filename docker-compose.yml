@@ -28,7 +28,7 @@ services:
     container_name: cocoon-db
     restart: unless-stopped
     ports:
-      - "192.168.1.50:3307:3306"
+      - "3307:3306"
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=${DB_NAME}

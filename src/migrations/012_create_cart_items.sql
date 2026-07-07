@@ -4,8 +4,8 @@ CREATE TABLE cart_items (
     ref VARCHAR(60) NOT NULL,
     quantity INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (cart_id) REFERENCES carts(id),
-    FOREIGN KEY (ref) REFERENCES products(ref),
+    FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (ref) REFERENCES products(ref) ON DELETE CASCADE,
     CONSTRAINT uniq_ref UNIQUE KEY(cart_id, ref),
     INDEX idx_cart_id (cart_id),
     INDEX idx_ref (ref)
