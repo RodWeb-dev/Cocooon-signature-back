@@ -19,15 +19,15 @@ class UserController
      */
     public function getMe(object $request): void
     {
-        $user = UserModel::findById($request->user['id']);
+        $user = UserModel::findById($request->user["id"]);
 
-        unset($user['hash_pwd']);
-        
+        unset($user["hash_pwd"]);
+
         http_response_code(200);
         echo json_encode([
-            'data'  => $user,
-            'message' => null,
-            'error' => null
+            "data" => $user,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -40,35 +40,38 @@ class UserController
      */
     public function updateMe(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
         $body = $request->body;
 
-        if(empty($body)) {
+        if (empty($body)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_data', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.no_data", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        foreach($body as &$b) {
-            if(is_string($b)) {
+        foreach ($body as &$b) {
+            if (is_string($b)) {
                 $b = FilterInput::sanitize($b);
             }
         }
 
-        if(isset($body['email'])) {
-            $mail = FilterInput::email($body['email']);
-            if(!$mail) {
+        if (isset($body["email"])) {
+            $mail = FilterInput::email($body["email"]);
+            if (!$mail) {
                 http_response_code(400);
                 echo json_encode([
-                    'data'    => null,
-                    'message' => null,
-                    'error'   => ['key' => 'api.valid_mail', 'params' => (object)[]]
+                    "data" => null,
+                    "message" => null,
+                    "error" => [
+                        "key" => "api.valid_mail",
+                        "params" => (object) [],
+                    ],
                 ]);
-                exit;
+                exit();
             }
         }
 
@@ -76,9 +79,9 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.user_update', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.user_update", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -89,51 +92,54 @@ class UserController
      */
     public function updatePassword(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
         $body = $request->body;
-        $fields = ['new_password', 'current_password'];
+        $fields = ["new_password", "current_password"];
 
         $missing = FilterInput::required($fields, $body);
-        if(!empty($missing)) {
+        if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.fields",
+                    "params" => ["fields" => implode(", ", $missing)],
+                ],
             ]);
-            exit;
+            exit();
         }
 
         $user = UserModel::findById($userId);
-        if(!password_verify($body['current_password'], $user['hash_pwd'])) {
+        if (!password_verify($body["current_password"], $user["hash_pwd"])) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.same_pwd', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.same_pwd", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        if(!FilterInput::password($body['new_password'])) {
+        if (!FilterInput::password($body["new_password"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.valid_pwd', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.valid_pwd", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $hash = password_hash($body['new_password'], PASSWORD_BCRYPT);
+        $hash = password_hash($body["new_password"], PASSWORD_BCRYPT);
 
         UserModel::updatePassword($userId, $hash);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.update_pwd', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.update_pwd", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -144,37 +150,40 @@ class UserController
      */
     public function deleteMe(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
 
-        if(!isset($request->body['password'])) {
+        if (!isset($request->body["password"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.required_pwd', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.required_pwd",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
-        $password = $request->body['password'];
+        $password = $request->body["password"];
 
         $user = UserModel::findById($userId);
-        if(!password_verify($password, $user['hash_pwd'])) {
+        if (!password_verify($password, $user["hash_pwd"])) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.same_pwd', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.same_pwd", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         UserModel::delete($userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.user_del', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.user_del", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -185,14 +194,14 @@ class UserController
      */
     public function getAddresses(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
         $addresses = UserModel::getAddresses($userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'  => $addresses,
-            'message' => null,
-            'error' => null
+            "data" => $addresses,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -204,22 +213,25 @@ class UserController
     public function addAddress(object $request): void
     {
         $body = $request->body;
-        $userId = $request->user['sub'];
-        $fields = ['name', 'address', 'postal_code', 'city'];
+        $userId = $request->user["sub"];
+        $fields = ["name", "address", "postal_code", "city"];
 
         $missing = FilterInput::required($fields, $body);
-        if(!empty($missing)) {
+        if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.fields",
+                    "params" => ["fields" => implode(", ", $missing)],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        foreach($body as &$b) {
-            if(is_string($b)) {
+        foreach ($body as &$b) {
+            if (is_string($b)) {
                 $b = FilterInput::sanitize($b);
             }
         }
@@ -228,9 +240,9 @@ class UserController
 
         http_response_code(201);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.address_add', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.address_add", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -242,21 +254,21 @@ class UserController
     public function updateAddress(object $request): void
     {
         $body = $request->body;
-        $userId = $request->user['sub'];
-        $addressId = $request->params['id'];
+        $userId = $request->user["sub"];
+        $addressId = $request->params["id"];
 
-        if(empty($body)) {
+        if (empty($body)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_data', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.no_data", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        foreach($body as &$b) {
-            if(is_string($b)) {
+        foreach ($body as &$b) {
+            if (is_string($b)) {
                 $b = FilterInput::sanitize($b);
             }
         }
@@ -265,9 +277,12 @@ class UserController
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.address_update', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => [
+                "key" => "api.address_update",
+                "params" => (object) [],
+            ],
+            "error" => null,
         ]);
     }
 
@@ -278,16 +293,16 @@ class UserController
      */
     public function deleteAddress(object $request): void
     {
-        $userId = $request->user['sub'];
-        $addressId = $request->params['id'];
+        $userId = $request->user["sub"];
+        $addressId = $request->params["id"];
 
         UserModel::deleteAddress($addressId, $userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.address_del', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.address_del", "params" => (object) []],
+            "error" => null,
         ]);
     }
 }

@@ -23,7 +23,7 @@ class AuthController
 
     public function __construct()
     {
-        $this->jwt = new JWT($_ENV['JWT_SECRET'], $_ENV['JWT_EXPIRATION']);
+        $this->jwt = new JWT($_ENV['JWT_SECRET'], (int) $_ENV['JWT_EXPIRATION']);
         $this->emailService = new EmailService();
     }
 
@@ -341,7 +341,7 @@ class AuthController
                 'email' => $user['email'],
                 'name'  => "{$user['firstname']} {$user['lastname']}"
             ];
-            $url = $_ENV['FRONTEND_URL'] . '/reinitialisation-mot-de-passe/' . $resetToken;
+            $url = $_ENV['FRONTEND_URL'] . '/reinitialiser-mot-de-passe/' . $resetToken;
             
             $this->emailService->sendResetPassword($to, $user['firstname'], $url);
         }

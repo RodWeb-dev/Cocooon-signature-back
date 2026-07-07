@@ -4,6 +4,6 @@ CREATE TABLE collection_images (
     url VARCHAR(255) NOT NULL,
     alt TEXT,
     display_order INT,
-    FOREIGN KEY (collection_id) REFERENCES collections(id),
+    FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
     INDEX idx_collection_id (collection_id)
 );

@@ -3,6 +3,6 @@ CREATE TABLE carts (
     owner VARCHAR(60) NOT NULL,
     status ENUM('pending', 'saved', 'validated', 'cancelled') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner) REFERENCES users(id),
+    FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_owner (owner)
 );

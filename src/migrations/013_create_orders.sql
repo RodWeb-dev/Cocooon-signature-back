@@ -10,7 +10,7 @@ CREATE TABLE orders (
         'cancelled'
     ) DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner) REFERENCES users(id),
-    FOREIGN KEY (address_id) REFERENCES addresses(id),
+    FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE,
     INDEX idx_owner (owner)
 );

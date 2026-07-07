@@ -45,7 +45,7 @@ class UserModel
     {
         $sql = "INSERT INTO users
             (firstname, lastname, email, hash_pwd)
-            VALUES (:id, :firstname, :lastname, :email, :hash_pwd)
+            VALUES (:firstname, :lastname, :email, :hash_pwd)
         ";
 
         $stmt = self::getDb()->prepare($sql);
