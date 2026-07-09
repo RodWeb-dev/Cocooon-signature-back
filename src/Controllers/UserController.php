@@ -19,7 +19,7 @@ class UserController
      */
     public function getMe(object $request): void
     {
-        $user = UserModel::findById($request->user["id"]);
+        $user = UserModel::findById($request->user["sub"]);
 
         unset($user["hash_pwd"]);
 
