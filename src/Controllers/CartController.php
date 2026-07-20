@@ -7,7 +7,6 @@ namespace App\Controllers;
 use App\Models\CartModel;
 use App\Models\ProductModel;
 use App\Core\Security\FilterInput;
-use Brevo\Types\Cart;
 
 /** HTTP handlers for cart endpoints. */
 class CartController
@@ -23,28 +22,34 @@ class CartController
      * @param  int    $quantity Number of units to add (must be >= 1)
      * @return array{code: int, data: string|null, error: string|null}
      */
-    private function addSingleItem(string $userId, string $ref, int $quantity): array
-    {
+    private function addSingleItem(
+        string $userId,
+        string $ref,
+        int $quantity,
+    ): array {
         $product = ProductModel::findByRef($ref);
         if (!$product) {
             return [
-                'code'    => 404,
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_product', 'params' => ['ref' => $ref]]
+                "code" => 404,
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.no_product",
+                    "params" => ["ref" => $ref],
+                ],
             ];
         }
 
         $cart = CartModel::findPendingCart($userId);
-        $cartId = $cart ? $cart['id'] : CartModel::create($userId);
+        $cartId = $cart ? $cart["id"] : CartModel::create($userId);
 
-        CartModel::addItem($cartId, $ref, $quantity, $product['price']);
+        CartModel::addItem($cartId, $ref, $quantity, $product["price"]);
 
         return [
-            'code'    => 201,
-            'data'    => null,
-            'message' => ['key' => 'api.addtocart', 'params' => (object)[]],
-            'error'   => null
+            "code" => 201,
+            "data" => null,
+            "message" => ["key" => "api.addtocart", "params" => (object) []],
+            "error" => null,
         ];
     }
 
@@ -57,14 +62,14 @@ class CartController
      */
     public function getCart(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
         $cart = CartModel::findPendingCart($userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => $cart ?? [],
-            'message' => null,
-            'error' => null
+            "data" => $cart ?? [],
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -75,40 +80,43 @@ class CartController
      */
     public function addItem(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
         $body = $request->body;
-        $fields = ['ref','quantity'];
+        $fields = ["ref", "quantity"];
 
         $missing = FilterInput::required($fields, $body);
         if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.fields",
+                    "params" => ["fields" => implode(", ", $missing)],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        $quantity = (int) $body['quantity'];
+        $quantity = (int) $body["quantity"];
 
         if ($quantity < 1) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.quantity', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.quantity", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $http = $this->addSingleItem($userId, $body['ref'], $quantity);
+        $http = $this->addSingleItem($userId, $body["ref"], $quantity);
 
-        http_response_code($http['code']);
+        http_response_code($http["code"]);
         echo json_encode([
-            'data'    => $http['data'],
-            'message' => $http['message'],
-            'error'   => $http['error']
+            "data" => $http["data"],
+            "message" => $http["message"],
+            "error" => $http["error"],
         ]);
     }
 
@@ -119,37 +127,37 @@ class CartController
      */
     public function updateItemQuantity(object $request): void
     {
-        $userId = $request->user['sub'];
-        $itemId = $request->params['id'];
+        $userId = $request->user["sub"];
+        $itemId = $request->params["id"];
 
-        if (!isset($request->body['quantity'])) {
+        if (!isset($request->body["quantity"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.quantity', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.quantity", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $quantity = (int) $request->body['quantity'];
+        $quantity = (int) $request->body["quantity"];
         if ($quantity < 1) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.qty_mini', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.qty_mini", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         CartModel::updateItemQuantity($itemId, $quantity, $userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.qty_update', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.qty_update", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -160,16 +168,16 @@ class CartController
      */
     public function deleteItem(object $request): void
     {
-        $userId = $request->user['sub'];
-        $itemId = $request->params['id'];
+        $userId = $request->user["sub"];
+        $itemId = $request->params["id"];
 
         CartModel::deleteItem($itemId, $userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.item_del', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.item_del", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -180,19 +188,19 @@ class CartController
      */
     public function clearCart(object $request): void
     {
-        $userId = $request->user['sub'];
+        $userId = $request->user["sub"];
 
         $cart = CartModel::findPendingCart($userId);
 
         if ($cart) {
-            CartModel::clear($cart['id']);
+            CartModel::clear($cart["id"]);
         }
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.cart_clear', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.cart_clear", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -206,30 +214,38 @@ class CartController
      */
     public function mergeItems(object $request): void
     {
-        $userId = $request->user['sub'];
-        $items = $request->body['items'] ?? [];
+        $userId = $request->user["sub"];
+        $items = $request->body["items"] ?? [];
 
         if (!is_array($items) || empty($items)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.cart_merge', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.cart_merge", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         $errors = [];
         $successCount = 0;
 
         foreach ($items as $item) {
-            if (!isset($item['ref']) || !isset($item['quantity']) || (int)$item['quantity'] < 1) {
-                $errors[] = 'Article invalide ignoré.';
+            if (
+                !isset($item["ref"]) ||
+                !isset($item["quantity"]) ||
+                (int) $item["quantity"] < 1
+            ) {
+                $errors[] = "Article invalide ignoré.";
                 continue;
             }
-            $result = $this->addSingleItem($userId, $item['ref'], (int) $item['quantity']);
-            if ($result['error']) {
-                $errors[] = $result['error'];
+            $result = $this->addSingleItem(
+                $userId,
+                $item["ref"],
+                (int) $item["quantity"],
+            );
+            if ($result["error"]) {
+                $errors[] = $result["error"];
             } else {
                 $successCount++;
             }
@@ -237,12 +253,12 @@ class CartController
 
         http_response_code(200);
         echo json_encode([
-            'data' => [
-                'merged' => $successCount,
-                'errors' => $errors
+            "data" => [
+                "merged" => $successCount,
+                "errors" => $errors,
             ],
-            'message' => null,
-            'error'   => null
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -253,16 +269,16 @@ class CartController
      */
     public function deleteCart(object $request): void
     {
-        $userId = $request->user['sub'];
-        $cartId = (int) $request->params['id'];
+        $userId = $request->user["sub"];
+        $cartId = (int) $request->params["id"];
 
         CartModel::deleteCart($cartId, $userId);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.cart_del', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.cart_del", "params" => (object) []],
+            "error" => null,
         ]);
     }
 }

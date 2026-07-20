@@ -27,9 +27,9 @@ class ProductController
 
         http_response_code(200);
         echo json_encode([
-            'data'   => $products,
-            'message' => null,
-            'error' => null
+            "data" => $products,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -40,26 +40,25 @@ class ProductController
      */
     public function getOne(object $request): void
     {
-        $slug = $request->params['slug'];
+        $slug = $request->params["slug"];
         $lang = $request->lang();
 
-        $product = ProductModel::findBySlug($slug, $lang)
-;
-        if(!$product) {
+        $product = ProductModel::findBySlug($slug, $lang);
+        if (!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.no_product", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         http_response_code(200);
         echo json_encode([
-            'data'    => $product,
-            'message' => null,
-            'error'   => null
+            "data" => $product,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -70,27 +69,27 @@ class ProductController
      */
     public function getReviews(object $request): void
     {
-        $slug = $request->params['slug'];
+        $slug = $request->params["slug"];
         $lang = $request->lang();
 
         $product = ProductModel::findBySlug($slug, $lang);
         if (!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.no_product", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         $reviews = ProductModel::getReviews($slug, $lang);
 
         http_response_code(200);
         echo json_encode([
-            'data'   => $reviews,
-            'message' => null,
-            'error' => null
+            "data" => $reviews,
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -104,66 +103,66 @@ class ProductController
      */
     public function addReview(object $request): void
     {
-        $userId = $request->user['sub'];
-        $slug = $request->params['slug'];
+        $userId = $request->user["sub"];
+        $slug = $request->params["slug"];
         $lang = $request->lang();
         $body = $request->body;
 
-        $missing = FilterInput::required(['rating'], $body);
+        $missing = FilterInput::required(["rating"], $body);
         if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.rev_rate', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.rev_rate", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $rating = (int) $body['rating'];
+        $rating = (int) $body["rating"];
         if ($rating < 1 || $rating > 5) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.rev_value', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.rev_value", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         $product = ProductModel::findBySlug($slug, $lang);
         if (!$product) {
             http_response_code(404);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.no_product', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.no_product", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        if (!OrderModel::hasDeliveredOrder($userId, $product['ref'])) {
+        if (!OrderModel::hasDeliveredOrder($userId, $product["ref"])) {
             http_response_code(403);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.refused', 'params' => (object)[]]
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.refused", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
         $comment = null;
-        if (isset($body['comment'])) {
-            $comment = FilterInput::sanitize($body['comment']);
+        if (isset($body["comment"])) {
+            $comment = FilterInput::sanitize($body["comment"]);
         }
 
-        ProductModel::addReview($product['ref'], $userId, $rating, $comment);
+        ProductModel::addReview($product["ref"], $userId, $rating, $comment);
 
         http_response_code(201);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.rev_ok', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.rev_ok", "params" => (object) []],
+            "error" => null,
         ]);
     }
 }

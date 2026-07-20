@@ -8,8 +8,8 @@ CREATE TABLE reviews (
     ),
     comment TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ref) REFERENCES products(ref),
-    FOREIGN KEY (owner) REFERENCES users(id),
+    FOREIGN KEY (ref) REFERENCES products(ref) ON DELETE CASCADE,
+    FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_ref (ref),
     INDEX idx_owner (owner)
 );

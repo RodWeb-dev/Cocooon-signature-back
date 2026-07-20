@@ -8,11 +8,6 @@ services:
     build: .
     container_name: cocoon-back
     restart: unless-stopped
-    environment:
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
     volumes:
       - ./src:/var/www/html
     labels:
@@ -28,7 +23,7 @@ services:
     container_name: cocoon-db
     restart: unless-stopped
     ports:
-      - "192.168.1.50:3307:3306"
+      - "3307:3306"
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=${DB_NAME}
