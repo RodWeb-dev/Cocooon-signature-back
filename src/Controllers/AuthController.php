@@ -23,8 +23,22 @@ class AuthController
 
     public function __construct()
     {
-        $this->jwt = new JWT($_ENV['JWT_SECRET'], (int) $_ENV['JWT_EXPIRATION']);
+        $this->jwt = new JWT(
+            $_ENV["JWT_SECRET"],
+            (int) $_ENV["JWT_EXPIRATION"],
+        );
         $this->emailService = new EmailService();
+    }
+
+    /** Returns the domain/secure cookie options for the current environment (dev runs over plain HTTP). */
+    private function cookieOptions(): array
+    {
+        $isDev = $_ENV["APP_ENV"] === "development";
+
+        return [
+            "domain" => $isDev ? "cocoon-signature.test" : "cocoon-signature.fr",
+            "secure" => !$isDev,
+        ];
     }
 
     /**
@@ -36,49 +50,53 @@ class AuthController
      * @param string $ip     Client IP address
      * @param string $action Rate limit action key
      */
-    private function validate(array $body, array $fields, string $ip, string $action): void
-    {
+    private function validate(
+        array $body,
+        array $fields,
+        string $ip,
+        string $action,
+    ): void {
         $missing = FilterInput::required($fields, $body);
-        if(!empty($missing)) {
+        if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => [
-                    'key'    => 'api.fields',
-                    'params' => ['fields' => implode(', ', $missing)]
-                ]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.fields",
+                    "params" => ["fields" => implode(", ", $missing)],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        if(!RateLimit::check($action, $ip)) {
+        if (!RateLimit::check($action, $ip)) {
             http_response_code(429);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => [
-                    'key'    => 'api.rate_limit',
-                    'params' => (object)[]
-                ]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.rate_limit",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        if(in_array('email', $fields) && !FilterInput::email($body['email'])) {
+        if (in_array("email", $fields) && !FilterInput::email($body["email"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => [
-                    'key'    => 'api.valid_mail',
-                    'params' => (object)[]
-                ]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.valid_mail",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
     }
-    
+
     /**
      * Registers a new user account.
      *
@@ -91,56 +109,61 @@ class AuthController
     {
         $body = $request->body;
         $ip = $request->ip;
-        $action = 'register';
-        $fields = ['firstname', 'lastname', 'email', 'password'];
+        $action = "register";
+        $fields = ["firstname", "lastname", "email", "password"];
 
         $this->validate($body, $fields, $ip, $action);
 
-        RateLimit::hit('register', $ip);
+        RateLimit::hit("register", $ip);
         // TODO Captcha v3 ?
 
-        if(!FilterInput::password($body['password'])) {
+        if (!FilterInput::password($body["password"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => [
-                    'key'    => 'api.valid_pwd',
-                    'params' => (object)[]
-                ]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.valid_pwd",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        if(UserModel::findByEmail($body['email'])) {
+        if (UserModel::findByEmail($body["email"])) {
             http_response_code(409);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => [
-                    'key'    => 'api.used_mail',
-                    'params' => (object)[]
-                ]
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.used_mail",
+                    "params" => (object) [],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        $firstname = FilterInput::sanitize($body['firstname']);
-        $lastname = FilterInput::sanitize($body['lastname']);
-        $subscribed = $body['newsletter'] ?? false;
-        $hashedPassword = password_hash($body['password'], PASSWORD_BCRYPT);
+        $firstname = FilterInput::sanitize($body["firstname"]);
+        $lastname = FilterInput::sanitize($body["lastname"]);
+        $subscribed = $body["newsletter"] ?? false;
+        $hashedPassword = password_hash($body["password"], PASSWORD_BCRYPT);
 
-        $userId = UserModel::create($firstname, $lastname, $body['email'], $hashedPassword);
+        $userId = UserModel::create(
+            $firstname,
+            $lastname,
+            $body["email"],
+            $hashedPassword,
+        );
 
-        if($subscribed) {
-            NewsletterModel::subscribe($body['email'], $userId);
+        if ($subscribed) {
+            NewsletterModel::subscribe($body["email"], $userId);
         }
 
         $token = bin2hex(random_bytes(32));
-        $url = $_ENV['FRONTEND_URL'] . '/verification-email/' . $token;
+        $url = $_ENV["FRONTEND_URL"] . "/verification-email/" . $token;
         $to = [
-            'email' => $body['email'],
-            'name'  => "$firstname $lastname"
+            "email" => $body["email"],
+            "name" => "$firstname $lastname",
         ];
 
         TokenModel::saveVerifyToken($userId, $token, time() + 86400);
@@ -148,9 +171,9 @@ class AuthController
 
         http_response_code(201);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.send_welcome', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.send_welcome", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -165,68 +188,77 @@ class AuthController
     {
         $body = $request->body;
         $ip = $request->ip;
-        $action = 'login';
-        $fields = ['email', 'password'];
+        $action = "login";
+        $fields = ["email", "password"];
 
         $this->validate($body, $fields, $ip, $action);
-        if(!RateLimit::check($action, $body['email'])) {
+        if (!RateLimit::check($action, $body["email"])) {
             http_response_code(429);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.rate_limit', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.rate_limit", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $user = UserModel::findByEmail($body['email']);
-        if(!$user) {
+        $user = UserModel::findByEmail($body["email"]);
+        if (!$user) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.credentials', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.credentials",
+                    "params" => (object) [],
+                ],
             ]);
 
             RateLimit::hit($action, $ip);
-            exit;
+            exit();
         }
 
-        if(!password_verify($body['password'], $user['hash_pwd'])) {
+        if (!password_verify($body["password"], $user["hash_pwd"])) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.credentials', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.credentials",
+                    "params" => (object) [],
+                ],
             ]);
 
             RateLimit::hit($action, $ip);
-            RateLimit::hit($action, $body['email']);
-            exit;
+            RateLimit::hit($action, $body["email"]);
+            exit();
         }
 
         RateLimit::reset($action, $ip);
-        RateLimit::reset($action, $body['email']);
+        RateLimit::reset($action, $body["email"]);
 
-        $accessToken = $this->jwt->encode($user['id'], $user['role']);
+        $accessToken = $this->jwt->encode($user["id"], $user["role"]);
 
         $refreshToken = bin2hex(random_bytes(32));
-        TokenModel::saveRefreshToken($user['id'], $refreshToken, time() + 604800);
+        TokenModel::saveRefreshToken(
+            $user["id"],
+            $refreshToken,
+            time() + 604800,
+        );
 
-        setcookie('refresh_token', $refreshToken, [
-            'expires'  => time() + 604800,
-            'path'     => '/api/auth/refresh',
-            'domain'   => 'cocoon-signature.fr',
-            'secure'   => true,
-            'httponly' => true,
-            'samesite' => 'Strict',
+        setcookie("refresh_token", $refreshToken, [
+            "expires" => time() + 604800,
+            "path" => "/api/auth/refresh",
+            ...$this->cookieOptions(),
+            "httponly" => true,
+            "samesite" => "Strict",
         ]);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => ['access_token' => $accessToken],
-            'message' => ['key' => 'api.login', 'params' => (object)[]],
-            'error'   => null,
+            "data" => ["access_token" => $accessToken],
+            "message" => ["key" => "api.login", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -237,24 +269,23 @@ class AuthController
      */
     public function logout(object $request): void
     {
-        if (isset($_COOKIE['refresh_token'])) {
-            TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);
-    
-            setcookie('refresh_token', '', [
-                'expires'  => time() - 3600,
-                'path'     => '/api/auth/refresh',
-                'domain'   => 'cocoon-signature.fr',
-                'secure'   => true,
-                'httponly' => true,
-                'samesite' => 'Strict',
+        if (isset($_COOKIE["refresh_token"])) {
+            TokenModel::deleteRefreshToken($_COOKIE["refresh_token"]);
+
+            setcookie("refresh_token", "", [
+                "expires" => time() - 3600,
+                "path" => "/api/auth/refresh",
+                ...$this->cookieOptions(),
+                "httponly" => true,
+                "samesite" => "Strict",
             ]);
         }
-    
+
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.logout', 'params' => (object)[]],
-            'error'   => null,
+            "data" => null,
+            "message" => ["key" => "api.logout", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -267,52 +298,57 @@ class AuthController
      */
     public function refresh(object $request): void
     {
-        if(!isset($_COOKIE['refresh_token'])) {
+        if (!isset($_COOKIE["refresh_token"])) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.error', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.error", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $token = TokenModel::findRefreshToken($_COOKIE['refresh_token']);
-        if(!$token || strtotime($token['expires_at']) < time()) {
-            if($token) {TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);}
+        $token = TokenModel::findRefreshToken($_COOKIE["refresh_token"]);
+        if (!$token || strtotime($token["expires_at"]) < time()) {
+            if ($token) {
+                TokenModel::deleteRefreshToken($_COOKIE["refresh_token"]);
+            }
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.error', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.error", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $user = UserModel::findById($token['owner']);
-        
-        $newAccessToken = $this->jwt->encode($user['id'], $user['role']);
+        $user = UserModel::findById($token["owner"]);
+
+        $newAccessToken = $this->jwt->encode($user["id"], $user["role"]);
         $newRefreshToken = bin2hex(random_bytes(32));
 
-        TokenModel::deleteRefreshToken($_COOKIE['refresh_token']);
-        TokenModel::saveRefreshToken($user['id'], $newRefreshToken, time() + 604800);
+        TokenModel::deleteRefreshToken($_COOKIE["refresh_token"]);
+        TokenModel::saveRefreshToken(
+            $user["id"],
+            $newRefreshToken,
+            time() + 604800,
+        );
 
-        setcookie('refresh_token', $newRefreshToken, [
-            'expires'  => time() + 604800,
-            'path'     => '/api/auth/refresh',
-            'domain'   => 'cocoon-signature.fr',
-            'secure'   => true,
-            'httponly' => true,
-            'samesite' => 'Strict',
+        setcookie("refresh_token", $newRefreshToken, [
+            "expires" => time() + 604800,
+            "path" => "/api/auth/refresh",
+            ...$this->cookieOptions(),
+            "httponly" => true,
+            "samesite" => "Strict",
         ]);
 
         http_response_code(200);
         echo json_encode([
-            'data' => [
-                'access_token' => $newAccessToken
+            "data" => [
+                "access_token" => $newAccessToken,
             ],
-            'message' => null,
-            'error' => null
+            "message" => null,
+            "error" => null,
         ]);
     }
 
@@ -327,32 +363,39 @@ class AuthController
     {
         $body = $request->body;
         $ip = $request->ip;
-        $action = 'forgot-password';
-        $fields = ['email'];
+        $action = "forgot-password";
+        $fields = ["email"];
 
         $this->validate($body, $fields, $ip, $action);
 
-        $user = UserModel::findByEmail($body['email']);
-        
-        if($user) {
+        $user = UserModel::findByEmail($body["email"]);
+
+        if ($user) {
             $resetToken = bin2hex(random_bytes(32));
-            TokenModel::saveResetToken($user['id'], $resetToken, time() + 3600);
+            TokenModel::saveResetToken($user["id"], $resetToken, time() + 3600);
             $to = [
-                'email' => $user['email'],
-                'name'  => "{$user['firstname']} {$user['lastname']}"
+                "email" => $user["email"],
+                "name" => "{$user["firstname"]} {$user["lastname"]}",
             ];
-            $url = $_ENV['FRONTEND_URL'] . '/reinitialiser-mot-de-passe/' . $resetToken;
-            
-            $this->emailService->sendResetPassword($to, $user['firstname'], $url);
+            $url =
+                $_ENV["FRONTEND_URL"] .
+                "/reinitialiser-mot-de-passe/" .
+                $resetToken;
+
+            $this->emailService->sendResetPassword(
+                $to,
+                $user["firstname"],
+                $url,
+            );
         }
 
         RateLimit::hit($action, $ip);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.forgot', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.forgot", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -366,40 +409,43 @@ class AuthController
     public function resetPassword(object $request): void
     {
         $body = $request->body;
-        $fields = ['password', 'token'];
+        $fields = ["password", "token"];
 
         $missing = FilterInput::required($fields, $body);
-        if(!empty($missing)) {
+        if (!empty($missing)) {
             http_response_code(400);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.fields', 'params' => ['fields' => implode(', ', $missing)]],
+                "data" => null,
+                "message" => null,
+                "error" => [
+                    "key" => "api.fields",
+                    "params" => ["fields" => implode(", ", $missing)],
+                ],
             ]);
-            exit;
+            exit();
         }
 
-        $token = TokenModel::findResetToken($body['token']);
+        $token = TokenModel::findResetToken($body["token"]);
 
-        if(!$token || strtotime($token['expires_at']) < time()) {
+        if (!$token || strtotime($token["expires_at"]) < time()) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.error', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.error", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        $hash = password_hash($body['password'], PASSWORD_BCRYPT);
-        UserModel::updatePassword($token['owner'], $hash);
-        TokenModel::deleteResetToken($token['value']);
+        $hash = password_hash($body["password"], PASSWORD_BCRYPT);
+        UserModel::updatePassword($token["owner"], $hash);
+        TokenModel::deleteResetToken($token["value"]);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.reset', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.reset", "params" => (object) []],
+            "error" => null,
         ]);
     }
 
@@ -412,27 +458,27 @@ class AuthController
      */
     public function verifyEmail(object $request): void
     {
-        $token = $request->params['token'];
+        $token = $request->params["token"];
 
         $dbtoken = TokenModel::findVerifyToken($token);
-        if(!$dbtoken || strtotime($dbtoken['expires_at']) < time()) {
+        if (!$dbtoken || strtotime($dbtoken["expires_at"]) < time()) {
             http_response_code(401);
             echo json_encode([
-                'data'    => null,
-                'message' => null,
-                'error'   => ['key' => 'api.error', 'params' => (object)[]],
+                "data" => null,
+                "message" => null,
+                "error" => ["key" => "api.error", "params" => (object) []],
             ]);
-            exit;
+            exit();
         }
 
-        UserModel::markEmailVerified($dbtoken['owner']);
+        UserModel::markEmailVerified($dbtoken["owner"]);
         TokenModel::deleteVerifyToken($token);
 
         http_response_code(200);
         echo json_encode([
-            'data'    => null,
-            'message' => ['key' => 'api.verify', 'params' => (object)[]],
-            'error'   => null
+            "data" => null,
+            "message" => ["key" => "api.verify", "params" => (object) []],
+            "error" => null,
         ]);
     }
 }

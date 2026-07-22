@@ -59,4 +59,22 @@ class NewsletterController
             "error" => null,
         ]);
     }
+
+    public function isSubscribed(object $request): void
+    {
+        $userId = $request->user["sub"];
+        $user = UserModel::findById($userId);
+        $subscribed = NewsletterModel::find($userId, $user["email"]);
+
+        if (!isset($subscribed["owner"])) {
+            NewsletterModel::subscribe($user["email"], $userId);
+        }
+
+        http_response_code(200);
+        echo json_encode([
+            "data" => !empty($subscribed),
+            "message" => null,
+            "error" => null,
+        ]);
+    }
 }
