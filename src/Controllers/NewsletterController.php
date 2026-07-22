@@ -60,6 +60,14 @@ class NewsletterController
         ]);
     }
 
+    /**
+     * Returns whether the authenticated user is subscribed to the newsletter.
+     *
+     * Auto-subscribes the user if no subscription row exists yet (e.g. accounts
+     * created before the newsletter feature).
+     *
+     * @param object $request Request with user context
+     */
     public function isSubscribed(object $request): void
     {
         $userId = $request->user["sub"];

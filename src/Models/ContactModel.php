@@ -7,13 +7,16 @@ namespace App\Models;
 use App\Core\DBConnection;
 use PDO;
 
+/** PDO queries for the contact_messages table. */
 class ContactModel
 {
+    /** Returns the shared PDO connection. */
     private static function getDb(): PDO
     {
         return DBConnection::getInstance();
     }
 
+    /** Inserts a contact message; returns true if exactly one row was inserted. */
     public static function create(
         string $name,
         string $email,

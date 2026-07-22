@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\OdooConnection;
+
 /**
  * Live Odoo implementation of OdooServiceInterface using XML-RPC / JSON-RPC.
  *
@@ -12,6 +14,9 @@ namespace App\Services;
  */
 class OdooApiService implements OdooServiceInterface
 {
+    /** Odoo x_categorie selection value for "Services" — not a real product category, excluded from site display */
+    private const EXCLUDED_CATEGORY_ID = 7;
+
     /**
      * Fetches all product categories from Odoo via search_read on product.category.
      *
@@ -19,7 +24,32 @@ class OdooApiService implements OdooServiceInterface
      */
     public function getCategories(): array
     {
+        $result = OdooConnection::getInstance()->executeKw(
+            "product.template",
+            "fields_get",
+            [["x_categorie"]],
+            ["attributes" => ["string", "selection"]],
+        );
 
+        $selection = $result["x_categorie"]["selection"];
+
+        $categories = [];
+        foreach ($selection as $pair) {
+            $categories[] = [
+                "id" => (int) $pair[0],
+                "name" => $pair[1],
+            ];
+        }
+
+        $categories = array_values(
+            array_filter(
+                $categories,
+                fn(array $category): bool => $category["id"] !==
+                    self::EXCLUDED_CATEGORY_ID,
+            ),
+        );
+
+        return $categories;
     }
 
     /**
@@ -29,7 +59,24 @@ class OdooApiService implements OdooServiceInterface
      */
     public function getSubCategories(): array
     {
+        $result = OdooConnection::getInstance()->executeKw(
+            "product.template",
+            "fields_get",
+            [["x_souscategorie"]],
+            ["attributes" => ["string", "selection"]],
+        );
 
+        $selection = $result["x_souscategorie"]["selection"];
+
+        $subcategories = [];
+        foreach ($selection as $pair) {
+            $subcategories[] = [
+                "id" => (int) $pair[0],
+                "name" => $pair[1],
+            ];
+        }
+
+        return $subcategories;
     }
 
     /**
@@ -42,7 +89,9 @@ class OdooApiService implements OdooServiceInterface
         $templates = $this->fetchTemplates();
 
         foreach ($templates as &$template) {
-            $template['variants'] = $this->fetchVariantsForTemplate($template['id']);
+            $template["variants"] = $this->fetchVariantsForTemplate(
+                $template["id"],
+            );
         }
 
         return $templates;
@@ -54,10 +103,7 @@ class OdooApiService implements OdooServiceInterface
      * @param  int   $templateId Odoo product.template id
      * @return array<int, array{id: int, display_name: string, lst_price: float}>
      */
-    public function getVariantsForTemplate(int $templateId): array
-    {
-
-    }
+    public function getVariantsForTemplate(int $templateId): array {}
 
     /**
      * Executes a search_read on product.template to retrieve catalogue fields.
@@ -103,12 +149,15 @@ class OdooApiService implements OdooServiceInterface
      * @param  int         $variantId           Odoo product.product id
      * @return string
      */
-    private function buildVariantRef(string|bool $templateDefaultCode, int $templateId, int $variantId): string
-    {
+    private function buildVariantRef(
+        string|bool $templateDefaultCode,
+        int $templateId,
+        int $variantId,
+    ): string {
         if ($templateDefaultCode) {
-            return $templateDefaultCode . '-' . $variantId;
+            return $templateDefaultCode . "-" . $variantId;
         }
-        return 'TMPL-' . $templateId . '-' . $variantId;
+        return "TMPL-" . $templateId . "-" . $variantId;
     }
 
     /**
@@ -117,10 +166,7 @@ class OdooApiService implements OdooServiceInterface
      * @param  int   $odooOrderId Odoo sale.order id
      * @return array Order status data
      */
-    public function getOrderStatus(int $odooOrderId): array
-    {
-
-    }
+    public function getOrderStatus(int $odooOrderId): array {}
 
     /**
      * Registers a newsletter subscriber in Odoo.
@@ -128,10 +174,7 @@ class OdooApiService implements OdooServiceInterface
      * @param  string $email Subscriber email address
      * @return bool   True on success
      */
-    public function addToNewsletter(string $email): bool
-    {
-
-    }
+    public function addToNewsletter(string $email): bool {}
 
     /**
      * Creates a sale order in Odoo after payment confirmation.
@@ -139,10 +182,7 @@ class OdooApiService implements OdooServiceInterface
      * @param  array $orderData Order payload (items, address, totals)
      * @return int   Odoo sale.order id
      */
-    public function createOrder(array $orderData): int
-    {
-
-    }
+    public function createOrder(array $orderData): int {}
 
     /**
      * Notifies Odoo of a confirmed payment.
@@ -151,8 +191,8 @@ class OdooApiService implements OdooServiceInterface
      * @param  array $paymentData  Payment details (amount, method, reference)
      * @return bool  True on success
      */
-    public function confirmPayment(int $odooOrderId, array $paymentData): bool
-    {
-
-    }
+    public function confirmPayment(
+        int $odooOrderId,
+        array $paymentData,
+    ): bool {}
 }

@@ -20,7 +20,7 @@ class CartController
      * @param  string $userId   Authenticated user UUID
      * @param  string $ref      Product reference (products.ref)
      * @param  int    $quantity Number of units to add (must be >= 1)
-     * @return array{code: int, data: string|null, error: string|null}
+     * @return array{code: int, data: null, message: array|null, error: array|null}
      */
     private function addSingleItem(
         string $userId,

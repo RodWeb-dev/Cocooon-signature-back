@@ -44,7 +44,7 @@ class NewsletterModel
         $stmt->execute();
     }
 
-    /** Returns the subscription row for a given user, or null. */
+    /** Returns the subscription row for a given user/email, or an empty array if none exists. */
     public static function find(string $userId, string $email): array
     {
         $sql =
