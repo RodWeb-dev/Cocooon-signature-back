@@ -255,7 +255,7 @@ class UserController
     {
         $body = $request->body;
         $userId = $request->user["sub"];
-        $addressId = $request->params["id"];
+        $addressId = (int) $request->params["id"];
 
         if (empty($body)) {
             http_response_code(400);
@@ -294,7 +294,7 @@ class UserController
     public function deleteAddress(object $request): void
     {
         $userId = $request->user["sub"];
-        $addressId = $request->params["id"];
+        $addressId = (int) $request->params["id"];
 
         UserModel::deleteAddress($addressId, $userId);
 

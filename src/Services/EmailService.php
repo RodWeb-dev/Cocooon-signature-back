@@ -19,6 +19,11 @@ class EmailService
         'name'  => 'Cocoon Signature'
     ];
 
+    private const CONTACT = [
+        'email' => 'contact-message@cocoon-signature.com',
+        'name'  => 'Cocoon Signature'
+    ];
+
     public function __construct()
     {
         $this->transport = $_ENV['APP_ENV'] === 'development'
@@ -81,6 +86,22 @@ class EmailService
             $this->transport->send(self::NOREPLY, $to, $subject, $body);
         } catch (MailException $e) {
             error_log("Échec envoi mail de réinitialisation à {$to['email']} : " . $e->getMessage());
+        }
+    }
+
+    public function sendContactMessage($name, $email, $subject, $content): void
+    {
+        $body = $this->renderTemplate('contact-message', [
+            'name' => $name,
+            'email'    => $email,
+            'subject'  => $subject,
+            'content'  => $content
+        ]);
+        $subject = 'Nouveau message de ' . $name . ' depuis cocoon-signature.fr';
+        try {
+            $this->transport->send(self::CONTACT, ['email' => 'contact@cocoon-signature.com', 'name' => 'Corinne Gallot'], $subject, $body);
+        } catch (MailException $e) {
+            error_log("Échec envoi mail de contact-message de {$email} : " . $e->getMessage());
         }
     }
 }

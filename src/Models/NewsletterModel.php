@@ -17,8 +17,10 @@ class NewsletterModel
     }
 
     /** Inserts a subscriber; if the email already exists, links it to the user if not yet linked. */
-    public static function subscribe(string $email, ?string $userId = null): void
-    {
+    public static function subscribe(
+        string $email,
+        ?string $userId = null,
+    ): void {
         $sql = "INSERT INTO newsletter_subscribers
                 (owner, email)
                 VALUES (:owner, :email)
@@ -26,9 +28,9 @@ class NewsletterModel
                 owner = COALESCE(owner, :owner_update)";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':owner', $userId);
-        $stmt->bindValue(':owner_update', $userId);
-        $stmt->bindValue(':email', $email);
+        $stmt->bindValue(":owner", $userId);
+        $stmt->bindValue(":owner_update", $userId);
+        $stmt->bindValue(":email", $email);
         $stmt->execute();
     }
 
@@ -38,19 +40,21 @@ class NewsletterModel
         $sql = "DELETE FROM newsletter_subscribers WHERE owner = :owner";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':owner', $userId);
+        $stmt->bindValue(":owner", $userId);
         $stmt->execute();
     }
 
     /** Returns the subscription row for a given user, or null. */
-    public static function findByOwner(string $userId): ?array
+    public static function find(string $userId, string $email): array
     {
-        $sql = "SELECT * FROM newsletter_subscribers WHERE owner = :owner";
+        $sql =
+            "SELECT * FROM newsletter_subscribers WHERE owner = :owner OR email = :email";
 
         $stmt = self::getDb()->prepare($sql);
-        $stmt->bindValue(':owner', $userId);
+        $stmt->bindValue(":owner", $userId);
+        $stmt->bindValue(":email", $email);
         $stmt->execute();
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 }

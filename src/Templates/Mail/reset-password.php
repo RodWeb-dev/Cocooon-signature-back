@@ -21,13 +21,13 @@
 </head>
 
 <body>
-    <h1>Bienvenue chez Cocoon Signature</h1>
+    <h1>Réinitialiser le mot de passe Cocoon Signature</h1>
 
     <h2>Bonjour <?= $data["firstname"] ?></h2>
 
-    <p>Nous sommes très heureux de vous compter parmis nos clients.<br>
-        Veuillez dès maintenant confirmer votre adresse mail en cliquant sur le lient suivant :<br>
-        <a href="<?= $data["url"] ?>">Je confirme mon adresse mail !</a>
+    <p>Vous avez demandé à réinitialiser votre mot de passe.<br>
+        Veuillez utiliser le formulaire dédié en cliquant sur le lient suivant :<br>
+        <a href="<?= $data["url"] ?>">Réinitialisation de mon mot de passe.</a>
     </p>
 
 </body>
