@@ -7,10 +7,11 @@ namespace App\Services;
 use App\Core\OdooConnection;
 
 /**
- * Live Odoo implementation of OdooServiceInterface using XML-RPC / JSON-RPC.
+ * Live Odoo implementation of OdooServiceInterface using JSON-RPC (via OdooConnection).
  *
- * All methods are structurally declared but not yet implemented — real API calls
- * are deferred until the Odoo catalogue is validated with Corinne.
+ * getCategories, getSubCategories, getProducts, getVariantsForTemplate,
+ * addToNewsletter and removeFromNewsletter are implemented. getOrderStatus,
+ * createOrder and confirmPayment remain empty stubs.
  */
 class OdooApiService implements OdooServiceInterface
 {
@@ -20,6 +21,7 @@ class OdooApiService implements OdooServiceInterface
     private const CATALOG_CATEGORY_ID = 7;
     private const DIMENSION_ATTRIBUTE_ID = 9;
     private const MATERIAL_ATTRIBUTE_ID = 10;
+    private const NEWSLETTER_LIST_ID = 1;
 
     /**
      * Fetches all product categories from Odoo via search_read on product.category.
@@ -244,22 +246,6 @@ class OdooApiService implements OdooServiceInterface
     }
 
     /**
-     * Returns the current status of an Odoo sale order.
-     *
-     * @param  int   $odooOrderId Odoo sale.order id
-     * @return array Order status data
-     */
-    public function getOrderStatus(int $odooOrderId): array {}
-
-    /**
-     * Registers a newsletter subscriber in Odoo.
-     *
-     * @param  string $email Subscriber email address
-     * @return bool   True on success
-     */
-    public function addToNewsletter(string $email): bool {}
-
-    /**
      * Creates a sale order in Odoo after payment confirmation.
      *
      * @param  array $orderData Order payload (items, address, totals)
@@ -278,4 +264,99 @@ class OdooApiService implements OdooServiceInterface
         int $odooOrderId,
         array $paymentData,
     ): bool {}
+
+    /**
+     * Returns the current status of an Odoo sale order.
+     *
+     * @param  int   $odooOrderId Odoo sale.order id
+     * @return array Order status data
+     */
+    public function getOrderStatus(int $odooOrderId): array {}
+
+    /**
+     * Registers a newsletter subscriber in Odoo.
+     *
+     * @param  string $email Subscriber email address
+     */
+    public function addToNewsletter(string $email): void
+    {
+        $contacts = $this->findMailingContactByEmail($email);
+
+        foreach ($contacts as $contact) {
+            if (in_array(self::NEWSLETTER_LIST_ID, $contact["list_ids"])) {
+                return;
+            }
+        }
+
+        $args = [
+            [
+                [
+                    "email" => $email,
+                    "list_ids" => [[4, self::NEWSLETTER_LIST_ID, 0]],
+                ],
+            ],
+        ];
+
+        OdooConnection::getInstance()->executeKw(
+            "mailing.contact",
+            "create",
+            $args,
+        );
+    }
+
+    /**
+     * Returns the mailing.contact rows matching an email, or null if none exist.
+     *
+     * @param  string $email Subscriber email address
+     * @return array<int, array{id: int, list_ids: int[]}>|null
+     */
+    private function findMailingContactByEmail(string $email): ?array
+    {
+        $args = [[["email", "=", $email]]];
+        $fields = ["id", "list_ids"];
+
+        $result = OdooConnection::getInstance()->executeKw(
+            "mailing.contact",
+            "search_read",
+            $args,
+            ["fields" => $fields],
+        );
+
+        if (empty($result)) {
+            return null;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Removes an email from the newsletter mailing list in Odoo.
+     *
+     * No-op if the email has no mailing.contact row on the newsletter list.
+     *
+     * @param  string $email Subscriber email address
+     */
+    public function removeFromNewsletter(string $email): void
+    {
+        $contacts = $this->findMailingContactByEmail($email);
+
+        $ids = [];
+        foreach ($contacts as $contact) {
+            if (in_array(self::NEWSLETTER_LIST_ID, $contact["list_ids"])) {
+                $ids[] = $contact["id"];
+            }
+        }
+
+        if (empty($ids)) {
+            return;
+        }
+
+        $args = [$ids, ["list_ids" => [[3, self::NEWSLETTER_LIST_ID, 0]]]];
+
+        OdooConnection::getInstance()->executeKw(
+            "mailing.contact",
+            "write",
+            $args,
+        );
+    }
 }

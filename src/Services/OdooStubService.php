@@ -15,7 +15,7 @@ class OdooStubService implements OdooServiceInterface
     /**
      * Returns a fixed list of product categories matching the Odoo production set.
      *
-     * @return array<int, array{value: string, name: string}>
+     * @return array<int, array{id: string, name: string}>
      */
     public function getCategories(): array
     {
@@ -32,7 +32,7 @@ class OdooStubService implements OdooServiceInterface
     /**
      * Returns a fixed list of product subcategories matching the Odoo production set.
      *
-     * @return array<int, array{value: string, name: string}>
+     * @return array<int, array{id: string, name: string}>
      */
     public function getSubCategories(): array
     {
@@ -113,11 +113,14 @@ class OdooStubService implements OdooServiceInterface
      *
      * display_name format: "Product name (dimension, Material)" or "Product name (Material)".
      *
-     * @param  int   $templateId Odoo product.template id
+     * @param  int         $templateId          Odoo product.template id
+     * @param  string|bool $templateDefaultCode Unused in the stub (kept for interface compatibility)
      * @return array<int, array{id: int, display_name: string, lst_price: float}> Empty array for unknown template ids
      */
-    public function getVariantsForTemplate(int $templateId, string|bool $templateDefaultCode): array;
-    {
+    public function getVariantsForTemplate(
+        int $templateId,
+        string|bool $templateDefaultCode,
+    ): array {
         $variants = [
             // Plateau (id: 26)
             26 => [
@@ -173,15 +176,24 @@ class OdooStubService implements OdooServiceInterface
     }
 
     /**
-     * Not yet stubbed — always returns true.
+     * Not yet stubbed.
      *
      * @param  string $email Subscriber email address
-     * @return bool   Always true in stub
      */
-    public function addToNewsletter(string $email): bool
+    public function addToNewsletter(string $email): void
     {
         // TODO
-        return true;
+        return;
+    }
+
+    /**
+     * Not yet stubbed.
+     *
+     * @param  string $email Subscriber email address
+     */
+    public function removeFromNewsletter(string $email): void
+    {
+        return;
     }
 
     /**
