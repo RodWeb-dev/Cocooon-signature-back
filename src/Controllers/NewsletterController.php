@@ -6,10 +6,18 @@ namespace App\Controllers;
 
 use App\Models\NewsletterModel;
 use App\Models\UserModel;
+use App\Services\OdooFactory;
+use App\Services\OdooServiceInterface;
 
 /** Handles newsletter subscription endpoints. */
 class NewsletterController
 {
+    private OdooServiceInterface $odoo;
+
+    public function __construct()
+    {
+        $this->odoo = OdooFactory::create();
+    }
     /**
      * Subscribes an email address to the newsletter.
      *
@@ -26,6 +34,12 @@ class NewsletterController
         }
 
         NewsletterModel::subscribe($email, $userId);
+
+        try {
+            $this->odoo->addToNewsletter($email);
+        } catch (\Exception $e) {
+            error_log("Odoo API error: " . $e->getMessage());
+        }
 
         http_response_code(201);
         echo json_encode([
@@ -45,11 +59,23 @@ class NewsletterController
         $userId = $request->user["sub"];
         $subscribed = $request->body["subscribed"];
 
+        $user = UserModel::findById($userId);
         if ($subscribed) {
-            $user = UserModel::findById($userId);
             NewsletterModel::subscribe($user["email"], $userId);
+
+            try {
+                $this->odoo->addToNewsletter($user["email"]);
+            } catch (\Exception $e) {
+                error_log("Odoo API error: " . $e->getMessage());
+            }
         } else {
             NewsletterModel::unsubscribe($userId);
+
+            try {
+                $this->odoo->removeFromNewsletter($user["email"]);
+            } catch (\Exception $e) {
+                error_log("Odoo API error: " . $e->getMessage());
+            }
         }
 
         http_response_code(201);
