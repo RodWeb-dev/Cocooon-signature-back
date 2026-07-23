@@ -30,12 +30,17 @@ interface OdooServiceInterface
     public function getProducts(): array;
 
     /**
-     * Returns all variants (product.product) for a given template id.
+     * Returns all variants (product.product) for a given template id, enriched
+     * with dimension/material and a MariaDB-ready variant_ref.
      *
-     * @param  int   $templateId Odoo product.template id
-     * @return array<int, array{id: int, display_name: string, lst_price: float}> Variant rows
+     * @param  int         $templateId          Odoo product.template id
+     * @param  string|bool $templateDefaultCode Odoo default_code of the parent template (false when not set)
+     * @return array<int, array{id: int, variant_ref: string, display_name: string, lst_price: float, dimension: string|null, material: string|null}> Variant rows
      */
-    public function getVariantsForTemplate(int $templateId): array;
+    public function getVariantsForTemplate(
+        int $templateId,
+        string|bool $templateDefaultCode,
+    ): array;
 
     // --- CRON: order status sync ---
 
@@ -47,17 +52,21 @@ interface OdooServiceInterface
      */
     public function getOrderStatus(int $odooOrderId): array;
 
-    // --- CRON: newsletter sync ---
+    // --- Direct calls: triggered by user action ---
 
     /**
      * Registers a new newsletter subscriber in Odoo.
      *
      * @param  string $email Subscriber email address
-     * @return bool   True on success
      */
-    public function addToNewsletter(string $email): bool;
+    public function addToNewsletter(string $email): void;
 
-    // --- Direct calls: triggered by user actions ---
+    /**
+     * Remove a newsletter subscriber in Odoo.
+     *
+     * @param  string $email Subscriber email address
+     */
+    public function removeFromNewsletter(string $email): void;
 
     /**
      * Pushes a validated order to Odoo after payment confirmation.

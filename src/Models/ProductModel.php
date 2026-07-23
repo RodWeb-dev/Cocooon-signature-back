@@ -184,6 +184,7 @@ class ProductModel
         return $product ?: null;
     }
 
+    /** Resolves a product ref from its slug, checking the translated table first, then the default one. */
     private static function findRefBySlug(string $slug, string $lang): ?string
     {
         $ref = '';

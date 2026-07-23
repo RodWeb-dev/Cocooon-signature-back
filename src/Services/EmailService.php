@@ -89,6 +89,14 @@ class EmailService
         }
     }
 
+    /**
+     * Sends a contact-form message to the shop's contact address.
+     *
+     * @param string $name    Sender name as entered in the contact form
+     * @param string $email   Sender email address
+     * @param string $subject Message subject
+     * @param string $content Message body
+     */
     public function sendContactMessage($name, $email, $subject, $content): void
     {
         $body = $this->renderTemplate('contact-message', [

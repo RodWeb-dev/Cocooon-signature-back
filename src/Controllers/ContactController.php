@@ -8,6 +8,7 @@ use App\Core\Security\FilterInput;
 use App\Models\ContactModel;
 use App\Services\EmailService;
 
+/** HTTP handler for the public contact form endpoint. */
 class ContactController
 {
     private EmailService $emailService;
@@ -17,6 +18,13 @@ class ContactController
         $this->emailService = new EmailService();
     }
 
+    /**
+     * Validates and persists a contact message, then notifies the shop by email.
+     *
+     * Responds 201 on success, 400 on missing/invalid fields or persistence failure.
+     *
+     * @param object $request Request with body: name, email, subject, content
+     */
     public function send(object $request): void
     {
         $body = $request->body;
