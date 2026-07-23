@@ -24,3 +24,6 @@ COPY ./src /var/www/html
 
 # Copier la config Apache personnalisée
 COPY ./config/apache.conf /etc/apache2/sites-available/000-default.conf
+
+# Rediriger le error log Apache/PHP vers stderr pour le voir dans les logs Docker
+RUN ln -sf /dev/stderr /var/log/apache2/error.log
