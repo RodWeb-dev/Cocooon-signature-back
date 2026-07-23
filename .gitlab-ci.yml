@@ -62,6 +62,25 @@ deploy:staging:
       DB_PASSWORD=$DB_PASSWORD
       DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
       EOF
+    - |
+      cat > /srv/cocoon-signature/back/src/.env << EOF
+      APP_ENV=$APP_ENV
+      FRONTEND_URL=$FRONTEND_URL
+      DB_NAME=$DB_NAME
+      DB_USER=$DB_USER
+      DB_PASSWORD=$DB_PASSWORD
+      DB_HOST=$DB_HOST
+      JWT_SECRET=$JWT_SECRET
+      JWT_EXPIRATION=$JWT_EXPIRATION
+      ODOO_URL=$ODOO_URL
+      ODOO_DB=$ODOO_DB
+      ODOO_USER=$ODOO_USER
+      ODOO_UID=$ODOO_UID
+      ODOO_API_KEY=$ODOO_API_KEY
+      BREVO_API_KEY=$BREVO_API_KEY
+      PAYPLUG_SECRET_KEY=$PAYPLUG_SECRET_KEY
+      PAYPLUG_WEBHOOK_SECRET=$PAYPLUG_WEBHOOK_SECRET
+      EOF
     - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
   rules:
     - if: $CI_COMMIT_BRANCH == "develop"
@@ -83,6 +102,25 @@ deploy:prod:
       DB_USER=$DB_USER
       DB_PASSWORD=$DB_PASSWORD
       DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+      EOF
+    - |
+      cat > /srv/cocoon-signature/back/src/.env << EOF
+      APP_ENV=$APP_ENV
+      FRONTEND_URL=$FRONTEND_URL
+      DB_NAME=$DB_NAME
+      DB_USER=$DB_USER
+      DB_PASSWORD=$DB_PASSWORD
+      DB_HOST=$DB_HOST
+      JWT_SECRET=$JWT_SECRET
+      JWT_EXPIRATION=$JWT_EXPIRATION
+      ODOO_URL=$ODOO_URL
+      ODOO_DB=$ODOO_DB
+      ODOO_USER=$ODOO_USER
+      ODOO_UID=$ODOO_UID
+      ODOO_API_KEY=$ODOO_API_KEY
+      BREVO_API_KEY=$BREVO_API_KEY
+      PAYPLUG_SECRET_KEY=$PAYPLUG_SECRET_KEY
+      PAYPLUG_WEBHOOK_SECRET=$PAYPLUG_WEBHOOK_SECRET
       EOF
     - docker compose -f /srv/cocoon-signature/back/docker-compose.yml up -d
   rules:
