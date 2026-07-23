@@ -57,18 +57,12 @@ deploy:staging:
     - docker push $IMAGE_NAME:latest
     - |
       cat > /srv/cocoon-signature/back/.env << EOF
-      DB_NAME=$DB_NAME
-      DB_USER=$DB_USER
-      DB_PASSWORD=$DB_PASSWORD
-      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
-      EOF
-    - |
-      cat > /srv/cocoon-signature/back/src/.env << EOF
       APP_ENV=$APP_ENV
       FRONTEND_URL=$FRONTEND_URL
       DB_NAME=$DB_NAME
       DB_USER=$DB_USER
       DB_PASSWORD=$DB_PASSWORD
+      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
       DB_HOST=$DB_HOST
       JWT_SECRET=$JWT_SECRET
       JWT_EXPIRATION=$JWT_EXPIRATION
@@ -98,18 +92,12 @@ deploy:prod:
     - docker push $IMAGE_NAME:latest
     - |
       cat > /srv/cocoon-signature/back/.env << EOF
-      DB_NAME=$DB_NAME
-      DB_USER=$DB_USER
-      DB_PASSWORD=$DB_PASSWORD
-      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
-      EOF
-    - |
-      cat > /srv/cocoon-signature/back/src/.env << EOF
       APP_ENV=$APP_ENV
       FRONTEND_URL=$FRONTEND_URL
       DB_NAME=$DB_NAME
       DB_USER=$DB_USER
       DB_PASSWORD=$DB_PASSWORD
+      DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
       DB_HOST=$DB_HOST
       JWT_SECRET=$JWT_SECRET
       JWT_EXPIRATION=$JWT_EXPIRATION
