@@ -84,7 +84,7 @@ class OdooStubService implements OdooServiceInterface
     /**
      * Returns two real product templates from Corinne's catalogue (Plateau, Cadres N°520).
      *
-     * @return array<int, array{id: int, name: string, default_code: string|false, list_price: float, x_categorie: string|false, x_souscategorie: string|false, product_variant_ids: int[]}>
+     * @return array<int, array{id: int, name: string, default_code: string|false, list_price: float, x_categorie: string|false, x_souscategorie: string|false}>
      */
     public function getProducts(): array
     {
@@ -96,7 +96,6 @@ class OdooStubService implements OdooServiceInterface
                 "list_price" => 116.67,
                 "x_categorie" => "4",
                 "x_souscategorie" => "75",
-                "product_variant_ids" => [50, 51, 52],
             ],
             [
                 "id" => 17,
@@ -105,23 +104,6 @@ class OdooStubService implements OdooServiceInterface
                 "list_price" => 75.0,
                 "x_categorie" => "4",
                 "x_souscategorie" => "74",
-                "product_variant_ids" => [
-                    35,
-                    36,
-                    37,
-                    38,
-                    39,
-                    40,
-                    41,
-                    42,
-                    43,
-                    44,
-                    45,
-                    46,
-                    47,
-                    48,
-                    49,
-                ],
             ],
         ];
     }
@@ -134,7 +116,7 @@ class OdooStubService implements OdooServiceInterface
      * @param  int   $templateId Odoo product.template id
      * @return array<int, array{id: int, display_name: string, lst_price: float}> Empty array for unknown template ids
      */
-    public function getVariantsForTemplate(int $templateId): array
+    public function getVariantsForTemplate(int $templateId, string|bool $templateDefaultCode): array;
     {
         $variants = [
             // Plateau (id: 26)

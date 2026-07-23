@@ -35,8 +35,10 @@ interface OdooServiceInterface
      * @param  int   $templateId Odoo product.template id
      * @return array<int, array{id: int, display_name: string, lst_price: float}> Variant rows
      */
-    public function getVariantsForTemplate(int $templateId): array;
-
+    public function getVariantsForTemplate(
+        int $templateId,
+        string|bool $templateDefaultCode,
+    ): array;
     // --- CRON: order status sync ---
 
     /**

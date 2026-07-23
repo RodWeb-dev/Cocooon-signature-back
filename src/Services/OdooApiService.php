@@ -16,6 +16,10 @@ class OdooApiService implements OdooServiceInterface
 {
     /** Odoo x_categorie selection value for "Services" — not a real product category, excluded from site display */
     private const EXCLUDED_CATEGORY_ID = 7;
+    /** Odoo categ_id selection for catalog - products to display on website */
+    private const CATALOG_CATEGORY_ID = 7;
+    private const DIMENSION_ATTRIBUTE_ID = 9;
+    private const MATERIAL_ATTRIBUTE_ID = 10;
 
     /**
      * Fetches all product categories from Odoo via search_read on product.category.
@@ -80,41 +84,78 @@ class OdooApiService implements OdooServiceInterface
     }
 
     /**
-     * Fetches all product templates from Odoo and attaches their variants.
+     * Fetches all product templates from Odoo.
      *
-     * @return array<int, array{id: int, name: string, default_code: string|false, list_price: float, x_categorie: string|false, x_souscategorie: string|false, variants: array}>
+     * @return array<int, array{id: int, name: string, default_code: string|false, list_price: float, x_categorie: string|false, x_souscategorie: string|false}>
      */
     public function getProducts(): array
     {
-        $templates = $this->fetchTemplates();
-
-        foreach ($templates as &$template) {
-            $template["variants"] = $this->fetchVariantsForTemplate(
-                $template["id"],
-            );
-        }
-
-        return $templates;
+        return $this->fetchTemplates();
     }
 
     /**
-     * Fetches all variants (product.product) for a given template id from Odoo.
+     * Fetches and enriches all variants for a given template, resolving
+     * attribute values into dimension/material and building the variant_ref.
      *
-     * @param  int   $templateId Odoo product.template id
-     * @return array<int, array{id: int, display_name: string, lst_price: float}>
+     * @param  int         $templateId          Odoo product.template id
+     * @param  string|bool $templateDefaultCode Odoo default_code of the parent template (false when not set)
+     * @return array<int, array{id: int, variant_ref: string, display_name: string, lst_price: float, dimension: string|null, material: string|null}>
      */
-    public function getVariantsForTemplate(int $templateId): array {}
+    public function getVariantsForTemplate(
+        int $templateId,
+        string|bool $templateDefaultCode,
+    ): array {
+        $rawVariants = $this->fetchVariantsForTemplate($templateId);
+        $variants = [];
+
+        foreach ($rawVariants as $row) {
+            $attributes = $this->resolveAttributeValues(
+                $row["product_template_variant_value_ids"],
+            );
+            $variantRef = $this->buildVariantRef(
+                $templateDefaultCode,
+                $templateId,
+                $row["id"],
+            );
+            $variants[] = [
+                "id" => $row["id"],
+                "variant_ref" => $variantRef,
+                "display_name" => $row["display_name"],
+                "lst_price" => $row["lst_price"],
+                ...$attributes,
+            ];
+        }
+
+        return $variants;
+    }
 
     /**
      * Executes a search_read on product.template to retrieve catalogue fields.
      *
-     * Fields: id, name, default_code, list_price, x_categorie, x_souscategorie, product_variant_ids.
+     * Fields: id, name, default_code, list_price, x_categorie, x_souscategorie.
      *
      * @return array<int, array> Raw Odoo template rows
      */
     private function fetchTemplates(): array
     {
-        // search_read on product.template
+        $args = [[["categ_id", "=", self::CATALOG_CATEGORY_ID]]];
+        $fields = [
+            "id",
+            "name",
+            "default_code",
+            "list_price",
+            "x_categorie",
+            "x_souscategorie",
+        ];
+
+        $result = OdooConnection::getInstance()->executeKw(
+            "product.template",
+            "search_read",
+            $args,
+            ["fields" => $fields],
+        );
+
+        return $result;
     }
 
     /**
@@ -125,7 +166,23 @@ class OdooApiService implements OdooServiceInterface
      */
     private function fetchVariantsForTemplate(int $templateId): array
     {
-        // search_read on product.product, domain [['product_tmpl_id', '=', $templateId]]
+        $args = [[["product_tmpl_id", "=", $templateId]]];
+        $fields = [
+            "id",
+            "default_code",
+            "lst_price",
+            "product_template_variant_value_ids",
+            "display_name",
+        ];
+
+        $result = OdooConnection::getInstance()->executeKw(
+            "product.product",
+            "search_read",
+            $args,
+            ["fields" => $fields],
+        );
+
+        return $result;
     }
 
     /**
@@ -136,7 +193,33 @@ class OdooApiService implements OdooServiceInterface
      */
     private function resolveAttributeValues(array $attributeValueIds): array
     {
-        // search_read on product.template.attribute.value
+        if ($attributeValueIds === []) {
+            return ["dimension" => null, "material" => null];
+        }
+
+        $args = [[["id", "in", $attributeValueIds]]];
+        $fields = ["id", "name", "attribute_id"];
+
+        $results = OdooConnection::getInstance()->executeKw(
+            "product.template.attribute.value",
+            "search_read",
+            $args,
+            ["fields" => $fields],
+        );
+
+        $dimension = null;
+        $material = null;
+
+        foreach ($results as $result) {
+            if ($result["attribute_id"][0] === self::DIMENSION_ATTRIBUTE_ID) {
+                $dimension = $result["name"];
+            }
+            if ($result["attribute_id"][0] === self::MATERIAL_ATTRIBUTE_ID) {
+                $material = $result["name"];
+            }
+        }
+
+        return ["dimension" => $dimension, "material" => $material];
     }
 
     /**
